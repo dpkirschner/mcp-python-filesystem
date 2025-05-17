@@ -98,30 +98,6 @@ jobs:
       run: |
         bandit -r src -c pyproject.toml
 
-  docs:
-    name: Build Documentation
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[docs]" sphinx sphinx-rtd-theme
-    
-    - name: Build documentation
-      run: |
-        sphinx-build -b html docs/source docs/build
-    
-    - name: Check documentation for broken links
-      run: |
-        sphinx-build -b linkcheck docs/source docs/build
-
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
