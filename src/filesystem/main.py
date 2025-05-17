@@ -84,6 +84,18 @@ class FileInfo(BaseModel):
     isFile: bool
     permissions: str
 
+# --- New Pydantic Models for Structured Output ---
+class DirectoryEntryItem(BaseModel):
+    name: str
+    type: str  # "file" or "directory"
+    size: Optional[int] = None
+    modified_timestamp: Optional[datetime] = None
+
+class FileContentResult(BaseModel):
+    path: str
+    content: Optional[str] = None
+    error: Optional[str] = None
+
 class TreeEntry(BaseModel):
     name: str
     type: str # "file" or "directory"
@@ -209,16 +221,25 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool):
         return types.TextContent(text=content)
 
     @mcp.tool()
-    async def read_multiple_files(args: ReadMultipleFilesArgs) -> types.TextContent:
+    async def read_multiple_files(args: ReadMultipleFilesArgs) -> List[FileContentResult]:
         results = []
         for file_path_str in args.paths:
             try:
                 valid_path = await fs_context.validate_path(file_path_str)
                 content = await fs_context._read_file_async(valid_path)
-                results.append(f"{file_path_str}:\n{content}\n")
+                result = FileContentResult(
+                    path=file_path_str,
+                    content=content,
+                    error=None
+                )
             except Exception as e:
-                results.append(f"{file_path_str}: Error - {str(e)}")
-        return types.TextContent(text="\n---\n".join(results))
+                result = FileContentResult(
+                    path=file_path_str,
+                    content=None,
+                    error=str(e)
+                )
+            results.append(result)
+        return results
 
     @mcp.tool()
     async def write_file(args: WriteFileArgs) -> types.TextContent:
@@ -269,16 +290,23 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool):
         return types.TextContent(text=f"Successfully created directory {args.path} (or it already existed).")
 
     @mcp.tool()
-    async def list_directory(args: ListDirectoryArgs) -> types.TextContent:
+    async def list_directory(args: ListDirectoryArgs) -> RootModel[List[DirectoryEntryItem]]:
         valid_path = await fs_context.validate_path(args.path)
         if not valid_path.is_dir():
             raise McpError(types.ErrorData(code=types.INVALID_PARAMS, message=f"Path is not a directory: {args.path}"))
         
-        entries_str = []
+        entries = []
         for entry in await asyncio.to_thread(list, valid_path.iterdir()):
-            prefix = "[DIR]" if entry.is_dir() else "[FILE]"
-            entries_str.append(f"{prefix} {entry.name}")
-        return types.TextContent(text="\n".join(entries_str))
+            entry_type = "directory" if entry.is_dir() else "file"
+            entry_stat = await asyncio.to_thread(entry.stat)
+            entry_item = DirectoryEntryItem(
+                name=entry.name,
+                type=entry_type,
+                size=entry_stat.st_size if entry_type == "file" else None,
+                modified_timestamp=datetime.fromtimestamp(entry_stat.st_mtime, tz=timezone.utc)
+            )
+            entries.append(entry_item)
+        return RootModel[List[DirectoryEntryItem]](root=entries)
 
     @mcp.tool()
     async def directory_tree(args: DirectoryTreeArgs) -> RootModel[List[TreeEntry]]:
