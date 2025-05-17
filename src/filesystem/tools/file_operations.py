@@ -1,17 +1,11 @@
-import asyncio
-import difflib
-import fnmatch
-import json
-import mimetypes
-import shutil
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import List, Optional
+import logging
+from typing import List
 
 from mcp.types import TextContent
 
+logger = logging.getLogger(__name__)
+
 from .. import models
-from ..context import context
 from ..tools import base
 
 

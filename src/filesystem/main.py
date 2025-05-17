@@ -4,19 +4,14 @@ import argparse
 import asyncio
 import difflib
 import fnmatch
-import json  # Not directly used, but Pydantic uses it
 import logging
-import mimetypes
-import os
-import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional
 
 import mcp.types as types
 from mcp.server.fastmcp import FastMCP  # Primary class for the server
-from mcp.server.models import InitializationOptions  # For server handshake
 from mcp.shared.exceptions import McpError
 from pydantic import BaseModel, Field, RootModel
 

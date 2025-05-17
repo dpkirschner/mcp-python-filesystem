@@ -44,8 +44,8 @@ test-cov:
 
 # Lint the code
 lint:
-	@echo "Running flake8..."
-	@flake8 src/ tests/
+	@echo "Running ruff..."
+	@ruff check --fix src/ tests/
 	@echo "Running mypy..."
 	@mypy src/ tests/
 
@@ -62,9 +62,12 @@ format:
 
 # Check code formatting without making changes
 check-format:
-	@echo "Checking code formatting..."
-	@black --check --diff src/ tests/
-	@isort --check-only --diff src/ tests/
+	@echo "Running ruff format check..."
+	@ruff format --check src/ tests/
+	@echo "Running Black check..."
+	@black --check src/ tests/
+	@echo "Running isort check..."
+	@isort --check-only src/ tests/
 
 # Run security checks
 check-security:

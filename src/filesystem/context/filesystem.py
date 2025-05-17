@@ -1,9 +1,8 @@
 import asyncio
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List
 
 try:
     import aiofiles
@@ -13,7 +12,7 @@ except ImportError:
     print("Warning: aiofiles not installed. Some file operations might be blocking or fail.", file=sys.stderr)
 
 from mcp import McpError
-from mcp.types import INTERNAL_ERROR, INVALID_PARAMS, ErrorData
+from mcp.types import INVALID_PARAMS, ErrorData
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +77,7 @@ class FilesystemContext:
                 
                 return final_resolved_path
                 
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise McpError(ErrorData(
                 code=INVALID_PARAMS,
                 message=f"Path does not exist: {requested_path_str}"
@@ -94,8 +93,10 @@ class FilesystemContext:
         return final_resolved_path
 
     async def _read_file_async(self, path: Path) -> str:
-        if not HAS_AIO: return path.read_text(encoding="utf-8")
-        async with aiofiles.open(path, "r", encoding="utf-8") as f: return await f.read()
+        if not HAS_AIO: 
+            return path.read_text(encoding="utf-8")
+        async with aiofiles.open(path, "r", encoding="utf-8") as f: 
+            return await f.read()
 
     async def _write_file_async(self, path: Path, content: str):
         if not HAS_AIO: return path.write_text(content, encoding="utf-8")

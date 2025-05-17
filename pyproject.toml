@@ -30,7 +30,7 @@ test = [
   "black",
   "isort",
   "mypy",
-  "flake8"
+  "ruff"
 ]
 all = ["pypdf", "python-magic"] # Updated: 'pillow' removed, 'aiofiles' is now core
 
@@ -91,8 +91,14 @@ omit = ["tests/*"]
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "def __repr__", "raise ImportError", "raise NotImplementedError"]
 
-[flake8]
-max-line-length = 88
+[tool.ruff]
+# Enable basic rules
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+]
+# Exclude directories
 exclude = [
   ".git",
   "__pycache__",
@@ -101,11 +107,16 @@ exclude = [
   ".tox",
   "build",
   "dist",
-  "*.egg-info",
+  "*.egg-info"
 ]
-per-file-ignores = [
-  # Allow non-abstract empty methods in abstract base classes
-  "*/tests/*:E303 E402 E501 F401 F403 F405 F841"
-]
+# Line length
+line-length = 88
+# Auto-fix mode
+target-version = "py310"
+extend-ignore = ["E501"]
+
+# Enable isort
+[tool.ruff.isort]
+known-first-party = ["filesystem"]
 
 [tool.uv]

@@ -2,7 +2,7 @@ import asyncio
 import shutil
 import tempfile
 from pathlib import Path
-from typing import AsyncGenerator, List
+from typing import List
 
 import pytest
 from mcp.server.fastmcp import FastMCP
