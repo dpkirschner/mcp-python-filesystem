@@ -18,8 +18,20 @@ dependencies = [
 [project.optional-dependencies]
 pdf = ["pypdf >=4.0"]         # For PDF reading tool
 magic = ["python-magic >=0.4"] # For advanced MIME type detection
-# 'aio' extra can be removed if aiofiles is core, or kept if other async libs might be added optionally.
-# For now, let's assume aiofiles being core covers the main async I/O need.
+test = [
+  "pytest>=7.0.0",
+  "pytest-asyncio>=0.20.0",
+  "pytest-cov>=3.0.0",
+  "pytest-mock>=3.10.0",
+  "coverage>=6.0.0",
+  "pytest-aiohttp>=1.0.0",
+  "pytest-xdist>=2.5.0",
+  "pytest-timeout>=2.1.0",
+  "black",
+  "isort",
+  "mypy",
+  "flake8"
+]
 all = ["pypdf", "python-magic"] # Updated: 'pillow' removed, 'aiofiles' is now core
 
 [project.scripts]
@@ -32,5 +44,68 @@ where = ["src"] # Tells setuptools to find your package in the 'src' directory
 [build-system]
 requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+addopts = "-v --cov=src --cov-report=term-missing --cov-report=xml"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "def __repr__", "raise ImportError", "raise NotImplementedError"]
+
+[flake8]
+max-line-length = 88
+exclude = [
+  ".git",
+  "__pycache__",
+  ".pytest_cache",
+  ".mypy_cache",
+  ".tox",
+  "build",
+  "dist",
+  "*.egg-info",
+]
+per-file-ignores = [
+  # Allow non-abstract empty methods in abstract base classes
+  "*/tests/*:E303 E402 E501 F401 F403 F405 F841"
+]
 
 [tool.uv]

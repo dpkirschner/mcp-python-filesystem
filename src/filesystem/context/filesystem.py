@@ -12,8 +12,8 @@ except ImportError:
     HAS_AIO = False
     print("Warning: aiofiles not installed. Some file operations might be blocking or fail.", file=sys.stderr)
 
-from mcp.shared.exceptions import McpError
-from mcp.types import types
+from mcp import McpError
+from mcp.types import ErrorData, INVALID_PARAMS, INTERNAL_ERROR
 
 logger = logging.getLogger(__name__)
 
@@ -41,37 +41,55 @@ class FilesystemContext:
         p_user = Path(requested_path_str).expanduser()
         
         try:
-            if is_for_write and not p_user.exists() and p_user.parent.exists():
-                resolved_base = p_user.parent.resolve(strict=True)
-                final_resolved_path = resolved_base / p_user.name
+            if is_for_write and not check_existence:
+                # For write operations where we don't care if the file exists,
+                # find the first existing parent directory and check if it's allowed
+                current = p_user.parent
+                while True:
+                    try:
+                        resolved = current.resolve(strict=True)
+                        if await self._is_path_actually_allowed(resolved):
+                            # Found an existing parent that's allowed, construct the full path
+                            final_resolved_path = (resolved / p_user.relative_to(current)).resolve()
+                            return final_resolved_path
+                        else:
+                            raise McpError(ErrorData(
+                                code=INVALID_PARAMS,
+                                message=f"Access denied: Path '{requested_path_str}' would be outside allowed areas."
+                            ))
+                    except FileNotFoundError:
+                        if current.parent == current:
+                            # Reached root and still didn't find an existing allowed directory
+                            raise McpError(ErrorData(
+                                code=INVALID_PARAMS,
+                                message=f"Cannot determine if path is allowed: no existing parent directory found in allowed areas for '{requested_path_str}'"
+                            ))
+                        current = current.parent
             else:
-                final_resolved_path = p_user.resolve(strict=True if check_existence and not is_for_write else False)
-
-        except FileNotFoundError:
-            if is_for_write:
-                parent_path = p_user.parent
-                try:
-                    resolved_parent = parent_path.resolve(strict=True)
-                    if not await self._is_path_actually_allowed(resolved_parent):
-                        raise McpError(types.ErrorData(code=types.INVALID_PARAMS, message=f"Access denied: Parent directory of '{requested_path_str}' is outside allowed areas."))
-                    final_resolved_path = resolved_parent / p_user.name
-                except FileNotFoundError:
-                    raise McpError(types.ErrorData(code=types.RESOURCE_NOT_FOUND, message=f"Parent directory does not exist: {parent_path}"))
-                except Exception as e_parent:
-                    logger.warning(f"Error resolving parent of '{requested_path_str}': {e_parent}")
-                    raise McpError(types.ErrorData(code=types.INVALID_PARAMS, message=f"Access denied or invalid path: '{requested_path_str}' due to parent directory issue."))
-            else:
-                raise McpError(types.ErrorData(code=types.RESOURCE_NOT_FOUND, message=f"Path does not exist: {requested_path_str}"))
-        except Exception as e_resolve:
-            logger.warning(f"Error resolving path '{requested_path_str}': {e_resolve}")
-            raise McpError(types.ErrorData(code=types.INVALID_PARAMS, message=f"Access denied or invalid path: '{requested_path_str}'"))
-
-        if not await self._is_path_actually_allowed(final_resolved_path):
-            logger.warning(f"Access Denied: '{final_resolved_path}' (from '{requested_path_str}') is outside allowed directories: {[str(d) for d in self.allowed_directories]}")
-            raise McpError(types.ErrorData(code=types.INVALID_PARAMS, message=f"Access denied: Path '{requested_path_str}' is outside allowed areas."))
-
-        if check_existence and not is_for_write and not final_resolved_path.exists():
-            raise McpError(types.ErrorData(code=types.RESOURCE_NOT_FOUND, message=f"Path does not exist after validation: {final_resolved_path}"))
+                # For read operations or when we need to check existence
+                final_resolved_path = p_user.resolve(strict=check_existence)
+                
+                # Check if it's in an allowed directory
+                if not await self._is_path_actually_allowed(final_resolved_path):
+                    raise McpError(ErrorData(
+                        code=INVALID_PARAMS,
+                        message=f"Access denied: Path '{requested_path_str}' is outside allowed areas."
+                    ))
+                
+                return final_resolved_path
+                
+        except FileNotFoundError as e:
+            raise McpError(ErrorData(
+                code=INVALID_PARAMS,
+                message=f"Path does not exist: {requested_path_str}"
+            ))
+            
+        except Exception as e:
+            logger.warning(f"Error resolving path '{requested_path_str}': {e}")
+            raise McpError(ErrorData(
+                code=INVALID_PARAMS,
+                message=f"Access denied or invalid path: '{requested_path_str}': {str(e)}"
+            ))
             
         return final_resolved_path
 
