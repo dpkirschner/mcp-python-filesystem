@@ -1,0 +1,36 @@
+[project]
+name = "mcp-filesystem"
+version = "0.2.0" # Updated version
+description = "A local filesystem interface for Claude via the Model Context Protocol."
+readme = "README.md"
+requires-python = ">=3.10" # Python 3.10+ is good for the features used
+license = { text = "MIT" }
+authors = [
+  { name = "Daniel Kirschner", email = "dan@sudosynthesis.dev" }
+]
+dependencies = [
+  "mcp[cli] >=1.2.0",
+  "pydantic >=2.0",
+  "pathspec >=0.11", # Used in FSContext for .gitignore style patterns
+  "aiofiles >=23.0",  # Moved to core for async file I/O
+]
+
+[project.optional-dependencies]
+pdf = ["pypdf >=4.0"]         # For PDF reading tool
+magic = ["python-magic >=0.4"] # For advanced MIME type detection
+# 'aio' extra can be removed if aiofiles is core, or kept if other async libs might be added optionally.
+# For now, let's assume aiofiles being core covers the main async I/O need.
+all = ["pypdf", "python-magic"] # Updated: 'pillow' removed, 'aiofiles' is now core
+
+[project.scripts]
+# Assuming your Python script is saved as src/filesystem/main.py
+filesystem-server-start = "filesystem.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"] # Tells setuptools to find your package in the 'src' directory
+
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
