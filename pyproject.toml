@@ -30,7 +30,8 @@ test = [
   "black",
   "isort",
   "mypy",
-  "ruff"
+  "ruff",
+  "types-aiofiles"
 ]
 all = ["pypdf", "python-magic"] # Updated: 'pillow' removed, 'aiofiles' is now core
 

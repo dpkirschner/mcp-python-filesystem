@@ -12,7 +12,7 @@ from ..tools import file_operations
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-async def run_server_logic(allowed_dirs_str: List[str], verbose: bool):
+async def run_server_logic(allowed_dirs_str: List[str], verbose: bool) -> None:
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
         logger.debug("Verbose logging enabled.")
@@ -39,7 +39,7 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool):
     await mcp.run_stdio_async()
     logger.info("Python MCP Filesystem Server stopped.")
 
-def main_cli():
+def main_cli() -> None:
     parser = argparse.ArgumentParser(description="Python MCP Filesystem Server (FastMCP)")
     parser.add_argument(
         "allowed_directory",

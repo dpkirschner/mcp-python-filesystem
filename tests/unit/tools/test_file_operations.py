@@ -8,7 +8,7 @@ from filesystem.tools import file_operations
 
 
 class TestReadFileTool:
-    async def test_read_file_success(self, mcp_server, fs_context, sample_file):
+    async def test_read_file_success(self, mcp_server, fs_context, sample_file) -> None:
         # Setup
         tool = file_operations.ReadFileTool(mcp_server, fs_context)
         args = schemas.ReadFileArgs(path=str(sample_file))
@@ -20,7 +20,7 @@ class TestReadFileTool:
         assert isinstance(result, TextContent)
         assert "This is a test file" in result.text
     
-    async def test_read_file_not_found(self, mcp_server, fs_context, temp_dir):
+    async def test_read_file_not_found(self, mcp_server, fs_context, temp_dir) -> None:
         # Setup
         tool = file_operations.ReadFileTool(mcp_server, fs_context)
         args = schemas.ReadFileArgs(path=str(temp_dir / "nonexistent.txt"))
@@ -31,7 +31,7 @@ class TestReadFileTool:
         assert "does not exist" in str(exc_info.value)
 
 class TestReadMultipleFilesTool:
-    async def test_read_multiple_files_success(self, mcp_server, fs_context, temp_dir):
+    async def test_read_multiple_files_success(self, mcp_server, fs_context, temp_dir) -> None:
         # Setup - create test files
         file1 = temp_dir / "file1.txt"
         file1.write_text("Content 1")
@@ -66,7 +66,7 @@ class TestReadMultipleFilesTool:
         assert results[2].error is not None
 
 class TestWriteFileTool:
-    async def test_write_file_success(self, mcp_server, fs_context, temp_dir, mocker):
+    async def test_write_file_success(self, mcp_server, fs_context, temp_dir, mocker) -> None:
         # Setup
         tool = file_operations.WriteFileTool(mcp_server, fs_context)
         file_path = str(temp_dir / "new_file.txt")
@@ -95,7 +95,7 @@ class TestWriteFileTool:
         mock_mkdir.assert_not_called()  # Parent dir exists, so mkdir shouldn't be called
         mock_write.assert_called_once_with(Path(file_path), content)
     
-    async def test_write_file_creates_directories(self, mcp_server, fs_context, temp_dir, mocker):
+    async def test_write_file_creates_directories(self, mcp_server, fs_context, temp_dir, mocker) -> None:
         # Setup - write to a path with non-existent parent directories
         tool = file_operations.WriteFileTool(mcp_server, fs_context)
         file_path = str(temp_dir / "new_dir" / "subdir" / "new_file.txt")
@@ -130,7 +130,7 @@ class TestWriteFileTool:
         mock_write.assert_called_once_with(Path(file_path), content)
 
 class TestEditFileTool:
-    async def test_edit_file_success(self, mcp_server, fs_context, temp_dir, mocker):
+    async def test_edit_file_success(self, mcp_server, fs_context, temp_dir, mocker) -> None:
         # Setup
         tool = file_operations.EditFileTool(mcp_server, fs_context)
         file_path = str(temp_dir / "test_edit.txt")
@@ -170,7 +170,7 @@ class TestEditFileTool:
         mock_validate.assert_called_once_with(file_path, is_for_write=True, check_existence=True)
         mock_read.assert_called_once_with(Path(file_path))
         
-    async def test_edit_file_with_dry_run(self, mcp_server, fs_context, temp_dir, mocker):
+    async def test_edit_file_with_dry_run(self, mcp_server, fs_context, temp_dir, mocker) -> None:
         # Setup
         tool = file_operations.EditFileTool(mcp_server, fs_context)
         file_path = str(temp_dir / "test_edit.txt")

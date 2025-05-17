@@ -32,7 +32,7 @@ class ReadFileTool(base.BaseTool):
         )
     
     # Register the tool with the MCP server
-    def register_tools(self):
+    def register_tools(self) -> None:
         @self.mcp_instance.tool()
         async def read_file_tool(args: models.ReadFileArgs) -> TextContent:
             return await self.read_file(args)
@@ -52,7 +52,15 @@ class ReadMultipleFilesTool(base.BaseTool):
         return await self.read_multiple_files(args)
     
     async def read_multiple_files(self, args: models.ReadMultipleFilesArgs) -> List[models.FileContentResult]:
-        results = []
+        """Read multiple files and return their contents.
+        
+        Args:
+            args: The arguments containing the list of file paths to read.
+            
+        Returns:
+            List[FileContentResult]: A list of file content results, one for each file.
+        """
+        results: List[models.FileContentResult] = []
         for file_path_str in args.paths:
             try:
                 valid_path = await self.fs_context.validate_path(file_path_str)
@@ -72,7 +80,7 @@ class ReadMultipleFilesTool(base.BaseTool):
         return results
     
     # Register the tool with the MCP server
-    def register_tools(self):
+    def register_tools(self) -> None:
         @self.mcp_instance.tool()
         async def read_multiple_files_tool(args: models.ReadMultipleFilesArgs) -> List[models.FileContentResult]:
             return await self.read_multiple_files(args)
@@ -102,7 +110,7 @@ class WriteFileTool(base.BaseTool):
         )
     
     # Register the tool with the MCP server
-    def register_tools(self):
+    def register_tools(self) -> None:
         @self.mcp_instance.tool()
         async def write_file_tool(args: models.WriteFileArgs) -> TextContent:
             return await self.write_file(args)
@@ -148,7 +156,7 @@ class EditFileTool(base.BaseTool):
             )
     
     # Register the tool with the MCP server
-    def register_tools(self):
+    def register_tools(self) -> None:
         @self.mcp_instance.tool()
         async def edit_file_tool(args: models.EditFileArgs) -> TextContent:
             return await self.edit_file(args)

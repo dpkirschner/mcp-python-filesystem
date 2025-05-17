@@ -2,7 +2,7 @@ import asyncio
 import shutil
 import tempfile
 from pathlib import Path
-from typing import List
+from typing import Iterator, List
 
 import pytest
 from mcp.server.fastmcp import FastMCP
@@ -11,7 +11,7 @@ from filesystem.context.filesystem import FilesystemContext
 
 
 @pytest.fixture
-def temp_dir():
+def temp_dir() -> Iterator[Path]:
     """Create a temporary directory that gets cleaned up after the test."""
     temp_dir = tempfile.mkdtemp()
     yield Path(temp_dir)
@@ -32,7 +32,7 @@ async def fs_context(allowed_dirs: List[str]) -> FilesystemContext:
     return FilesystemContext(allowed_dirs)
 
 @pytest.fixture
-def mcp_server():
+def mcp_server() -> FastMCP:
     """Create a FastMCP instance for testing."""
     return FastMCP(name="test-filesystem-server")
 
@@ -59,7 +59,7 @@ def sample_dir_structure(temp_dir: Path) -> Path:
 
 # Enable asyncio for all tests
 @pytest.fixture(autouse=True)
-def event_loop():
+def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop

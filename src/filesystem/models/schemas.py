@@ -41,7 +41,7 @@ class MoveFileArgs(BaseModel):
 class SearchFilesArgs(BaseModel):
     path: str
     pattern: str
-    excludePatterns: Optional[List[str]] = Field(default_factory=list)
+    excludePatterns: Optional[List[str]] = Field(default_factory=lambda: [])
 
 class GetFileInfoArgs(BaseModel):
     path: str

@@ -4,7 +4,7 @@ from typing import Any
 import mcp
 from mcp.server.fastmcp import FastMCP
 
-from ..context import context
+from ..context.filesystem import FilesystemContext
 
 
 class BaseTool(ABC):
@@ -13,7 +13,7 @@ class BaseTool(ABC):
     # Expose the mcp module as a class attribute
     mcp = mcp
     
-    def __init__(self, mcp_instance: FastMCP, fs_context: context.FilesystemContext):
+    def __init__(self, mcp_instance: FastMCP, fs_context: FilesystemContext):
         self.mcp_instance = mcp_instance
         self.fs_context = fs_context
         # Register tools when the instance is created

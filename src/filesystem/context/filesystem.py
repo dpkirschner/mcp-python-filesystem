@@ -89,8 +89,6 @@ class FilesystemContext:
                 code=INVALID_PARAMS,
                 message=f"Access denied or invalid path: '{requested_path_str}': {str(e)}"
             ))
-            
-        return final_resolved_path
 
     async def _read_file_async(self, path: Path) -> str:
         if not HAS_AIO: 
@@ -98,14 +96,15 @@ class FilesystemContext:
         async with aiofiles.open(path, "r", encoding="utf-8") as f: 
             return await f.read()
 
-    async def _write_file_async(self, path: Path, content: str):
+    async def _write_file_async(self, path: Path, content: str) -> int | None:
         if not HAS_AIO: 
             return path.write_text(content, encoding="utf-8")
         async with aiofiles.open(path, "w", encoding="utf-8") as f: 
             await f.write(content)
+            return None
 
-    async def _mkdir_async(self, path: Path, parents: bool = False, exist_ok: bool = False):
+    async def _mkdir_async(self, path: Path, parents: bool = False, exist_ok: bool = False)  -> None:
         await asyncio.to_thread(path.mkdir, parents=parents, exist_ok=exist_ok)
 
-    async def _rename_async(self, source: Path, destination: Path):
+    async def _rename_async(self, source: Path, destination: Path) -> None:
         await asyncio.to_thread(source.rename, destination)
