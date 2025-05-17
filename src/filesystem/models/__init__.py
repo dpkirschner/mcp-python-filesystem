@@ -1,12 +1,9 @@
-import importlib
-
 # For backward compatibility
 import sys
 
 # Import all symbols from schemas into the models namespace
 from . import schemas
 from .base import BaseModel
-from .schemas import *
 from .schemas import (
     CreateDirectoryArgs,
     DirectoryEntryItem,
@@ -30,6 +27,9 @@ sys.modules[__name__ + '.schemas'] = schemas
 
 # Also make it available as models.models for backward compatibility
 sys.modules[__name__ + '.models'] = schemas
+
+# Make schemas available as models for backward compatibility
+models = schemas
 
 __all__ = [
     'BaseModel',

@@ -99,8 +99,10 @@ class FilesystemContext:
             return await f.read()
 
     async def _write_file_async(self, path: Path, content: str):
-        if not HAS_AIO: return path.write_text(content, encoding="utf-8")
-        async with aiofiles.open(path, "w", encoding="utf-8") as f: await f.write(content)
+        if not HAS_AIO: 
+            return path.write_text(content, encoding="utf-8")
+        async with aiofiles.open(path, "w", encoding="utf-8") as f: 
+            await f.write(content)
 
     async def _mkdir_async(self, path: Path, parents: bool = False, exist_ok: bool = False):
         await asyncio.to_thread(path.mkdir, parents=parents, exist_ok=exist_ok)

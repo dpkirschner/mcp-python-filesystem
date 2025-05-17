@@ -1,4 +1,4 @@
-.PHONY: help test test-unit test-integration test-cov lint type-check format check-format check-security check-updates install install-dev clean
+.PHONY: help test test-unit test-integration test-cov lint type-check format check-format check-security check-updates install install-dev clean check all
 
 # Default target when `make` is run without arguments
 help:
@@ -7,16 +7,18 @@ help:
 	@echo "  make install          - Install the package in development mode"
 	@echo "  make install-dev      - Install development dependencies"
 	@echo "  make test             - Run all tests"
-	@echo "  test-unit            - Run unit tests"
-	@echo "  test-integration     - Run integration tests"
-	@echo "  test-cov             - Run tests with coverage report"
-	@echo "  lint                 - Run code linters (flake8, mypy)"
-	@echo "  type-check           - Run type checking with mypy"
-	@echo "  format               - Format code with Black and isort"
-	@echo "  check-format         - Check code formatting without making changes"
-	@echo "  check-security       - Run security checks (safety, bandit)"
-	@echo "  check-updates        - Check for outdated dependencies"
-	@echo "  clean                - Remove build artifacts and caches"
+	@echo "  make test-unit        - Run unit tests"
+	@echo "  make test-integration - Run integration tests"
+	@echo "  make test-cov         - Run tests with coverage report"
+	@echo "  make lint             - Run code linters (ruff, mypy)"
+	@echo "  make type-check       - Run type checking with mypy"
+	@echo "  make format           - Format code with Ruff, Black, and isort"
+	@echo "  make check-format     - Check code formatting without making changes"
+	@echo "  make check-security   - Run security checks (safety, bandit)"
+	@echo "  make check-updates    - Check for outdated dependencies"
+	@echo "  make clean            - Remove build artifacts and caches"
+	@echo "  make check            - Run format check, lint, and tests"
+	@echo "  make all              - Auto-format and run all checks"
 
 # Install the package in development mode
 install:
@@ -24,7 +26,7 @@ install:
 
 # Install development dependencies
 install-dev:
-	pip install -e ".[test]"
+	pip install -e ".[test,all]"
 
 # Run all tests
 test:
@@ -44,8 +46,8 @@ test-cov:
 
 # Lint the code
 lint:
-	@echo "Running ruff..."
-	@ruff check --fix src/ tests/
+	@echo "Running Ruff..."
+	@ruff check src/ tests/
 	@echo "Running mypy..."
 	@mypy src/ tests/
 
@@ -55,26 +57,29 @@ type-check:
 
 # Format the code
 format:
+	@echo "Running Ruff with --fix..."
+	@ruff check src/ tests/ --fix
 	@echo "Running isort..."
 	@isort src/ tests/
-	@echo "Running black..."
+	@echo "Running Black..."
 	@black src/ tests/
 
 # Check code formatting without making changes
 check-format:
-	@echo "Running ruff format check..."
+	@echo "Checking Ruff formatting..."
 	@ruff format --check src/ tests/
-	@echo "Running Black check..."
+	@echo "Checking Black formatting..."
 	@black --check src/ tests/
-	@echo "Running isort check..."
+	@echo "Checking isort formatting..."
 	@isort --check-only src/ tests/
 
 # Run security checks
 check-security:
-	@echo "Checking for vulnerable dependencies..."
+	@echo "Checking for vulnerable dependencies with safety..."
 	@pip freeze | safety check --stdin
-	@echo "\nRunning bandit security linter..."
+	@echo "Running bandit security linter..."
 	@bandit -r src -c pyproject.toml
+
 # Check for outdated dependencies
 check-updates:
 	@echo "Outdated packages:"
@@ -95,8 +100,8 @@ clean:
 		dist/ \
 		build/
 
-# Run all checks (format, lint, test)
+# Run all checks (format check, lint, test)
 check: check-format lint test
 
-# Run all checks and format code
+# Run all checks and auto-format
 all: format lint test

@@ -3,10 +3,10 @@ from typing import List
 
 from mcp.types import TextContent
 
-logger = logging.getLogger(__name__)
-
 from .. import models
 from ..tools import base
+
+logger = logging.getLogger(__name__)
 
 
 class ReadFileTool(base.BaseTool):
