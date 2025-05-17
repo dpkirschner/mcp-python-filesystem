@@ -1,5 +1,8 @@
 import argparse
+import asyncio
 import logging
+import sys
+from typing import List
 
 from mcp.server.fastmcp import FastMCP
 
@@ -27,10 +30,10 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool):
     logger.info(f"FastMCP server '{mcp.name}' created.")
 
     # Initialize tools
-    read_file_tool = file_operations.ReadFileTool(mcp, fs_context)
-    read_multiple_files_tool = file_operations.ReadMultipleFilesTool(mcp, fs_context)
-    write_file_tool = file_operations.WriteFileTool(mcp, fs_context)
-    edit_file_tool = file_operations.EditFileTool(mcp, fs_context)
+    file_operations.ReadFileTool(mcp, fs_context)
+    file_operations.ReadMultipleFilesTool(mcp, fs_context)
+    file_operations.WriteFileTool(mcp, fs_context)
+    file_operations.EditFileTool(mcp, fs_context)
 
     logger.info(f"Starting Python MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}")
     await mcp.run_stdio_async()
