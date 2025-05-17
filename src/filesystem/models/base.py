@@ -1,5 +1,8 @@
-from pydantic import BaseModel as PydanticBaseModel, Field, RootModel
-from typing import Optional, List, Dict, Any, Union
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, RootModel
+
 
 class BaseModel(PydanticBaseModel):
     """Base model class for all our Pydantic models."""

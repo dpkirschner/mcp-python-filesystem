@@ -1,12 +1,14 @@
 import asyncio
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
 from typing import AsyncGenerator, List
 
+import pytest
 from mcp.server.fastmcp import FastMCP
+
 from filesystem.context.filesystem import FilesystemContext
+
 
 @pytest.fixture
 def temp_dir():

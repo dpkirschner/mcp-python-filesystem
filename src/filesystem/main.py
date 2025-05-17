@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
 
-import asyncio
-import os
-import sys
 import argparse
-import logging
-import mimetypes
-import shutil
-import json # Not directly used, but Pydantic uses it
+import asyncio
 import difflib
 import fnmatch
+import json  # Not directly used, but Pydantic uses it
+import logging
+import mimetypes
+import os
+import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, List, Dict, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, RootModel
-
-
-from mcp.server.fastmcp import FastMCP # Primary class for the server
 import mcp.types as types
+from mcp.server.fastmcp import FastMCP  # Primary class for the server
+from mcp.server.models import InitializationOptions  # For server handshake
 from mcp.shared.exceptions import McpError
-from mcp.server.models import InitializationOptions # For server handshake
+from pydantic import BaseModel, Field, RootModel
 
 try:
     import aiofiles

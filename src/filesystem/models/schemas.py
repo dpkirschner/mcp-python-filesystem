@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import Field
 
 from .base import BaseModel
+
 
 class ReadFileArgs(BaseModel):
     path: str

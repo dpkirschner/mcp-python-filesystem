@@ -1,10 +1,12 @@
-import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-from filesystem.tools import file_operations
-from filesystem.models import schemas
+import pytest
 from mcp.types import TextContent
+
+from filesystem.models import schemas
+from filesystem.tools import file_operations
+
 
 class TestReadFileTool:
     async def test_read_file_success(self, mcp_server, fs_context, sample_file):

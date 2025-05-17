@@ -1,9 +1,11 @@
-import pytest
-from pathlib import Path
 import os
+from pathlib import Path
+
+import pytest
+from mcp.shared.exceptions import McpError
 
 from filesystem.context.filesystem import FilesystemContext
-from mcp.shared.exceptions import McpError
+
 
 class TestFilesystemContext:
     async def test_validate_path_within_allowed(self, fs_context, temp_dir):
