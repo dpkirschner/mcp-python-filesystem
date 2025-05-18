@@ -158,7 +158,9 @@ class EditFileTool(base.BaseTool):
         else:
             # Only write back if content was actually modified
             if modified_content_norm != original_content_norm:
-                await self.fs_context._write_file_async(valid_path, modified_content_norm)
+                await self.fs_context._write_file_async(
+                    valid_path, modified_content_norm
+                )
             return TextContent(type="text", text=f"Successfully edited {args.path}")
 
     # Register the tool with the MCP server

@@ -57,6 +57,8 @@ type-check:
 
 # Format the code
 format:
+	@echo "Running Ruff format..."
+	@ruff format src/ tests/
 	@echo "Running Ruff with --fix..."
 	@ruff check src/ tests/ --fix
 	@echo "Running isort..."

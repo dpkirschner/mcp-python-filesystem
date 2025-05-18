@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 import pytest
@@ -28,7 +27,7 @@ class TestReadFileToolIntegration:
 
         # Execute
         result = await tool.read_file(args)
-        
+
         # Verify
         assert isinstance(result, TextContent)
         assert test_content in result.text
@@ -60,20 +59,20 @@ class TestReadMultipleFilesToolIntegration:
 
         # Execute
         results = await tool.read_multiple_files(args)
-        
+
         # Verify
         assert len(results) == 3
-        
+
         # First file
         assert results[0].path == str(file1)
         assert results[0].content == file1_content
         assert results[0].error is None
-        
+
         # Second file
         assert results[1].path == str(file2)
         assert results[1].content == file2_content
         assert results[1].error is None
-        
+
         # Non-existent file
         assert results[2].path == non_existent_file
         assert results[2].content is None
@@ -91,16 +90,16 @@ class TestWriteFileToolIntegration:
         tool = file_operations.WriteFileTool(mcp_server, fs_context)
         file_path = str(temp_dir / "new_file.txt")
         content = "This is a test content for write operation"
-        
+
         args = schemas.WriteFileArgs(path=file_path, content=content)
 
         # Execute
         result = await tool.write_file(args)
-        
+
         # Verify
         assert isinstance(result, TextContent)
         assert f"Successfully wrote to {file_path}" == result.text
-        
+
         # Verify file was actually written
         assert Path(file_path).exists()
         assert Path(file_path).read_text() == content
@@ -114,7 +113,7 @@ class TestWriteFileToolIntegration:
         new_dir = temp_dir / "new_dir" / "subdir"
         file_path = str(new_dir / "new_file.txt")
         content = "Test content in new directory structure"
-        
+
         args = schemas.WriteFileArgs(path=file_path, content=content)
 
         # Verify parent directory doesn't exist yet
@@ -122,11 +121,11 @@ class TestWriteFileToolIntegration:
 
         # Execute
         result = await tool.write_file(args)
-        
+
         # Verify
         assert isinstance(result, TextContent)
         assert f"Successfully wrote to {file_path}" == result.text
-        
+
         # Verify file and directories were created
         assert Path(file_path).exists()
         assert Path(file_path).read_text() == content
@@ -143,26 +142,26 @@ class TestEditFileToolIntegration:
         test_file = temp_dir / "test_edit.txt"
         original_content = "Line 1\nLine 2\nLine 3"
         test_file.write_text(original_content)
-        
+
         # Initialize the tool
         tool = file_operations.EditFileTool(mcp_server, fs_context)
-        
+
         # Define edit operations
         args = schemas.EditFileArgs(
             path=str(test_file),
             edits=[
                 schemas.EditOperation(oldText="Line 2", newText="Modified Line 2"),
-                schemas.EditOperation(oldText="Line 3", newText="Line 3 modified")
-            ]
+                schemas.EditOperation(oldText="Line 3", newText="Line 3 modified"),
+            ],
         )
 
         # Execute
         result = await tool.edit_file(args)
-        
+
         # Verify
         assert isinstance(result, TextContent)
         assert result.text == f"Successfully edited {test_file}"
-        
+
         # Verify file was actually modified
         modified_content = test_file.read_text()
         assert "Modified Line 2" in modified_content
@@ -177,23 +176,23 @@ class TestEditFileToolIntegration:
         test_file = temp_dir / "test_dry_run.txt"
         original_content = "Original content"
         test_file.write_text(original_content)
-        
+
         # Initialize the tool
         tool = file_operations.EditFileTool(mcp_server, fs_context)
-        
+
         # Define edit operations with dryRun=True
         args = schemas.EditFileArgs(
             path=str(test_file),
             edits=[schemas.EditOperation(oldText="Original", newText="Modified")],
-            dryRun=True
+            dryRun=True,
         )
 
         # Execute
         result = await tool.edit_file(args)
-        
+
         # Verify
         assert isinstance(result, TextContent)
         assert "dry run" in result.text.lower()
-        
+
         # Verify file was not actually modified
         assert test_file.read_text() == original_content
