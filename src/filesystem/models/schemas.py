@@ -70,6 +70,10 @@ class CreateDirectoryArgs(BaseModel):
 
 class ListDirectoryArgs(BaseModel):
     path: str
+    show_hidden: bool = Field(
+        default=False,
+        description="Whether to include hidden files/directories (those starting with '.')",
+    )
 
 
 class DirectoryTreeArgs(BaseModel):

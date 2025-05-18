@@ -54,6 +54,10 @@ class ListDirectoryTool(base.BaseTool):
         try:
             # List all items in the directory
             for item in await asyncio.to_thread(valid_path.iterdir):
+                # Skip hidden files if show_hidden is False
+                if not args.show_hidden and item.name.startswith("."):
+                    continue
+
                 try:
                     item_path = valid_path / item.name
                     stat = await asyncio.to_thread(item_path.stat)

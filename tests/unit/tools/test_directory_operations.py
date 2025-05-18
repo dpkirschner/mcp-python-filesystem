@@ -167,6 +167,60 @@ class TestListDirectoryTool:
             await tool.list_directory(args)
         assert "does not exist" in str(exc_info.value)
 
+    async def test_list_hidden_files(
+        self: "TestListDirectoryTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        temp_dir: Path,
+    ) -> None:
+        # Setup - create test directory with hidden and non-hidden files/directories
+        test_dir = temp_dir / "hidden_test"
+        test_dir.mkdir()
+
+        # Create test files and directories
+        (test_dir / "visible.txt").write_text("Visible file")
+        (test_dir / ".hidden_file").write_text("Hidden file")
+        (test_dir / "visible_dir").mkdir()
+        (test_dir / ".hidden_dir").mkdir()
+
+        # Test with show_hidden=False (default)
+        tool = ListDirectoryTool(mcp_server, fs_context)
+        args = schemas.ListDirectoryArgs(path=str(test_dir))
+
+        # Execute
+        result = await tool.list_directory(args)
+
+        # Verify only non-hidden items are returned
+        assert len(result) == 2  # Only visible.txt and visible_dir
+        names = {item.name for item in result}
+        assert "visible.txt" in names
+        assert "visible_dir" in names
+        assert ".hidden_file" not in names
+        assert ".hidden_dir" not in names
+
+        # Test with show_hidden=True
+        args_show_hidden = schemas.ListDirectoryArgs(
+            path=str(test_dir), show_hidden=True
+        )
+
+        # Execute with show_hidden=True
+        result_hidden = await tool.list_directory(args_show_hidden)
+
+        # Verify all items are returned including hidden ones
+        assert len(result_hidden) == 4
+        hidden_names = {item.name for item in result_hidden}
+        assert "visible.txt" in hidden_names
+        assert "visible_dir" in hidden_names
+        assert ".hidden_file" in hidden_names
+        assert ".hidden_dir" in hidden_names
+
+        # Verify the types are correct
+        for item in result_hidden:
+            if item.name in ["visible_dir", ".hidden_dir"]:
+                assert item.type == "directory"
+            else:
+                assert item.type == "file"
+
     async def test_register_tools(
         self: "TestListDirectoryTool",
         mcp_server: FastMCP,
