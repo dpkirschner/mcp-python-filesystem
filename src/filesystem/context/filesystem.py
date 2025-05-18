@@ -169,3 +169,21 @@ class FilesystemContext:
 
     async def _rename_async(self, source: Path, destination: Path) -> None:
         await asyncio.to_thread(source.rename, destination)
+        
+    async def _get_stat(self, path: Path) -> os.stat_result:
+        """Get file status asynchronously.
+        
+        Args:
+            path: The path to get status for.
+            
+        Returns:
+            os.stat_result: The file status.
+            
+        Raises:
+            FileNotFoundError: If the file does not exist.
+        """
+        try:
+            return await asyncio.to_thread(path.stat)
+        except FileNotFoundError as e:
+            logger.warning(f"File not found: {path}")
+            raise

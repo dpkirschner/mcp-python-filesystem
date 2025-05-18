@@ -37,6 +37,7 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool) -> None:
     file_operations.ReadMultipleFilesTool(mcp, fs_context)
     file_operations.WriteFileTool(mcp, fs_context)
     file_operations.EditFileTool(mcp, fs_context)
+    file_operations.GetFileInfoTool(mcp, fs_context)
 
     logger.info(
         f"Starting Python MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}"

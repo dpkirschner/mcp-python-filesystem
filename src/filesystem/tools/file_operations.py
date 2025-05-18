@@ -1,8 +1,11 @@
 import asyncio
 import logging
+from datetime import datetime
 from typing import List
 
+import mimetypes
 from mcp.types import TextContent
+from pathlib import Path
 
 from .. import models
 from ..tools import base
@@ -36,6 +39,61 @@ class ReadFileTool(base.BaseTool):
         @self.mcp_instance.tool()
         async def read_file_tool(args: models.ReadFileArgs) -> TextContent:
             return await self.read_file(args)
+
+
+class GetFileInfoTool(base.BaseTool):
+    """Tool for getting information about a file, including MIME type and metadata."""
+
+    async def execute(self, args: models.GetFileInfoArgs) -> models.FileInfo:
+        """Execute the get file info operation.
+
+        Args:
+            args: The arguments for getting file info, including the file path.
+
+        Returns:
+            FileInfo: Information about the file including size, timestamps, and MIME type.
+        """
+        return await self.get_file_info(args)
+
+    async def get_file_info(self, args: models.GetFileInfoArgs) -> models.FileInfo:
+        valid_path = await self.fs_context.validate_path(args.path)
+        stat = await self.fs_context._get_stat(valid_path)
+        
+        # Get MIME type
+        mime_type, _ = mimetypes.guess_type(valid_path)
+        if mime_type is None:
+            mime_type = "application/octet-stream"  # Default MIME type
+            
+        # Check if the path is a directory or file
+        is_dir = stat.st_mode & 0o040000 != 0
+        is_file = not is_dir
+        
+        # Format permissions (e.g., 'rwxr-xr-x')
+        mode = stat.st_mode
+        perms = ""
+        for who in "USR GRP OTH".split():
+            for perm in "R W X".split():
+                if mode & getattr(stat, f"S_I{perm}O{who}", 0):
+                    perms += perm.lower()
+                else:
+                    perms += "-"
+        
+        return models.FileInfo(
+            size=stat.st_size,
+            created=datetime.fromtimestamp(stat.st_ctime),
+            modified=datetime.fromtimestamp(stat.st_mtime),
+            accessed=datetime.fromtimestamp(stat.st_atime),
+            isDirectory=is_dir,
+            isFile=is_file,
+            permissions=perms,
+            mimeType=mime_type,
+            path=str(valid_path)  # Convert Path to string
+        )
+
+    def register_tools(self) -> None:
+        @self.mcp_instance.tool()
+        async def get_file_info_tool(args: models.GetFileInfoArgs) -> models.FileInfo:
+            return await self.get_file_info(args)
 
 
 class ReadMultipleFilesTool(base.BaseTool):

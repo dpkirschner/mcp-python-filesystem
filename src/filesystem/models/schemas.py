@@ -107,6 +107,8 @@ class FileInfo(BaseModel):
     isDirectory: bool
     isFile: bool
     permissions: str
+    mimeType: str = Field(description="The MIME type of the file")
+    path: str = Field(description="The full path to the file")
 
 
 class TreeEntry(BaseModel):
