@@ -1,0 +1,73 @@
+name: Dependency Management
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual trigger'
+
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  dependencies:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test,all]"
+    
+    - name: Check for outdated dependencies
+      run: |
+        make check-updates
+    
+    - name: Create GitHub Issue if updates available
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+          
+          try {
+            // Get outdated packages
+            const outdated = execSync('pip list --outdated --format=json').toString();
+            const packages = JSON.parse(outdated);
+            
+            if (packages.length > 0) {
+              const issueTitle = 'Dependency Updates Available';
+              let issueBody = `The following dependencies have updates available:\n\n`;
+              
+              packages.forEach(pkg => {
+                issueBody += `- **${pkg.name}**: ${pkg.version} → ${pkg.latest_version}\n`;
+              });
+              
+              issueBody += '\nPlease update the dependencies in your project.';
+              
+              // Create issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['dependencies']
+              });
+            }
+          } catch (error) {
+            console.error('Error checking for outdated dependencies:', error);
+          }

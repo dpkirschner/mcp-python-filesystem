@@ -1,0 +1,56 @@
+name: Linting and Formatting
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.py'
+      - 'pyproject.toml'
+      - 'setup.cfg'
+      - 'Makefile'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.py'
+      - 'pyproject.toml'
+      - 'setup.cfg'
+      - 'Makefile'
+  workflow_dispatch:
+
+env:
+  PIP_CACHE_DIR: ~/.cache/pip
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  lint:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test,all]"
+    
+    - name: Run linters
+      run: |
+        make lint
+    
+    - name: Check code formatting
+      run: |
+        make check-format
+    
+    - name: Run type checking
+      run: |
+        make type-check
