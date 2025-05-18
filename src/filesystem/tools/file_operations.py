@@ -1,11 +1,10 @@
 import asyncio
 import logging
+import mimetypes
 from datetime import datetime
 from typing import List
 
-import mimetypes
 from mcp.types import TextContent
-from pathlib import Path
 
 from .. import models
 from ..tools import base
@@ -58,26 +57,33 @@ class GetFileInfoTool(base.BaseTool):
     async def get_file_info(self, args: models.GetFileInfoArgs) -> models.FileInfo:
         valid_path = await self.fs_context.validate_path(args.path)
         stat = await self.fs_context._get_stat(valid_path)
-        
+
         # Get MIME type
         mime_type, _ = mimetypes.guess_type(valid_path)
         if mime_type is None:
             mime_type = "application/octet-stream"  # Default MIME type
-            
+
         # Check if the path is a directory or file
         is_dir = stat.st_mode & 0o040000 != 0
         is_file = not is_dir
-        
+
         # Format permissions (e.g., 'rwxr-xr-x')
         mode = stat.st_mode
+
+        # Define permission bits for user, group, and others (read, write, execute)
+        permission_bits = [
+            (0o400, 0o200, 0o100),  # User (owner) permissions
+            (0o040, 0o020, 0o010),  # Group permissions
+            (0o004, 0o002, 0o001),  # Others permissions
+        ]
+
+        # Build the permission string
         perms = ""
-        for who in "USR GRP OTH".split():
-            for perm in "R W X".split():
-                if mode & getattr(stat, f"S_I{perm}O{who}", 0):
-                    perms += perm.lower()
-                else:
-                    perms += "-"
-        
+        for read_bit, write_bit, exec_bit in permission_bits:
+            perms += "r" if mode & read_bit else "-"
+            perms += "w" if mode & write_bit else "-"
+            perms += "x" if mode & exec_bit else "-"
+
         return models.FileInfo(
             size=stat.st_size,
             created=datetime.fromtimestamp(stat.st_ctime),
@@ -87,7 +93,7 @@ class GetFileInfoTool(base.BaseTool):
             isFile=is_file,
             permissions=perms,
             mimeType=mime_type,
-            path=str(valid_path)  # Convert Path to string
+            path=str(valid_path),  # Convert Path to string
         )
 
     def register_tools(self) -> None:
