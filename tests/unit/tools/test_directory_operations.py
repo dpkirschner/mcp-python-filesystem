@@ -221,6 +221,61 @@ class TestListDirectoryTool:
             else:
                 assert item.type == "file"
 
+    async def test_list_with_pattern(
+        self: "TestListDirectoryTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        temp_dir: Path,
+    ) -> None:
+        # Setup - create test directory with various file types
+        test_dir = temp_dir / "pattern_test"
+        test_dir.mkdir()
+
+        # Create test files with different extensions
+        (test_dir / "file1.txt").write_text("Text file 1")
+        (test_dir / "file2.txt").write_text("Text file 2")
+        (test_dir / "document.pdf").write_text("PDF content")
+        (test_dir / "image.jpg").write_text("Image data")
+        (test_dir / "notes.TXT").write_text("Uppercase extension")
+        (test_dir / "config.yaml").write_text("Config data")
+
+        tool = ListDirectoryTool(mcp_server, fs_context)
+
+        # Test with .txt pattern (case insensitive)
+        args_txt = schemas.ListDirectoryArgs(path=str(test_dir), pattern="*.txt")
+        result_txt = await tool.list_directory(args_txt)
+        assert len(result_txt) == 3  # file1.txt, file2.txt, notes.TXT
+        names_txt = {item.name.lower() for item in result_txt}
+        assert "file1.txt" in names_txt
+        assert "file2.txt" in names_txt
+        assert "notes.txt" in names_txt
+
+        # Test with .pdf pattern
+        args_pdf = schemas.ListDirectoryArgs(path=str(test_dir), pattern="*.pdf")
+        result_pdf = await tool.list_directory(args_pdf)
+        assert len(result_pdf) == 1
+        assert result_pdf[0].name == "document.pdf"
+
+        # Test with no pattern (should return all files)
+        args_all = schemas.ListDirectoryArgs(path=str(test_dir))
+        result_all = await tool.list_directory(args_all)
+        assert len(result_all) == 6  # All files we created
+
+        # Test with show_hidden and pattern
+        (test_dir / ".hidden.txt").write_text("Hidden text file")
+        args_hidden = schemas.ListDirectoryArgs(
+            path=str(test_dir), pattern="*.txt", show_hidden=True
+        )
+        result_hidden = await tool.list_directory(args_hidden)
+        assert len(result_hidden) == 4  # 3 txt files + 1 hidden txt file
+
+        # Test with a pattern that matches no files
+        args_none = schemas.ListDirectoryArgs(
+            path=str(test_dir), pattern="*.nonexistent"
+        )
+        result_none = await tool.list_directory(args_none)
+        assert len(result_none) == 0
+
     async def test_register_tools(
         self: "TestListDirectoryTool",
         mcp_server: FastMCP,

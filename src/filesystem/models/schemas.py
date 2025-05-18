@@ -74,6 +74,10 @@ class ListDirectoryArgs(BaseModel):
         default=False,
         description="Whether to include hidden files/directories (those starting with '.')",
     )
+    pattern: Optional[str] = Field(
+        default=None,
+        description="Optional glob pattern to filter directory entries by name (e.g., '*.txt' for .txt files)",
+    )
 
 
 class DirectoryTreeArgs(BaseModel):

@@ -58,6 +58,12 @@ class ListDirectoryTool(base.BaseTool):
                 if not args.show_hidden and item.name.startswith("."):
                     continue
 
+                # Skip if pattern is provided and doesn't match
+                if args.pattern is not None and not item.name.lower().endswith(
+                    args.pattern.lower().lstrip("*")
+                ):
+                    continue
+
                 try:
                     item_path = valid_path / item.name
                     stat = await asyncio.to_thread(item_path.stat)
