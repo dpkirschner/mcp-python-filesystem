@@ -64,7 +64,7 @@ jobs:
     
     - name: Run ruff
       run: |
-        ruff check --fix --show-source src tests
+        ruff check --fix --show-files src tests
     
     - name: Check code formatting with ruff
       run: |
@@ -72,7 +72,7 @@ jobs:
     
     - name: Check import sorting with ruff
       run: |
-        ruff check --select I --fix --show-source src tests
+        ruff check --select I --fix --show-files src tests
 
   security:
     name: Security Checks
