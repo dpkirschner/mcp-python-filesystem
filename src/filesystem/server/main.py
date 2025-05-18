@@ -9,8 +9,11 @@ from mcp.server.fastmcp import FastMCP
 from ..context import context
 from ..tools import file_operations
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 async def run_server_logic(allowed_dirs_str: List[str], verbose: bool) -> None:
     if verbose:
@@ -35,25 +38,27 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool) -> None:
     file_operations.WriteFileTool(mcp, fs_context)
     file_operations.EditFileTool(mcp, fs_context)
 
-    logger.info(f"Starting Python MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}")
+    logger.info(
+        f"Starting Python MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}"
+    )
     await mcp.run_stdio_async()
     logger.info("Python MCP Filesystem Server stopped.")
 
+
 def main_cli() -> None:
-    parser = argparse.ArgumentParser(description="Python MCP Filesystem Server (FastMCP)")
+    parser = argparse.ArgumentParser(
+        description="Python MCP Filesystem Server (FastMCP)"
+    )
     parser.add_argument(
         "allowed_directory",
-        nargs='+',
-        help="Root directory (or directories) that the server is allowed to access"
+        nargs="+",
+        help="Root directory (or directories) that the server is allowed to access",
     )
-    parser.add_argument(
-        "--verbose",
-        action='store_true',
-        help="Enable verbose logging"
-    )
-    
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+
     args = parser.parse_args()
     asyncio.run(run_server_logic(args.allowed_directory, args.verbose))
+
 
 if __name__ == "__main__":
     main_cli()

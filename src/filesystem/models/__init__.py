@@ -23,20 +23,31 @@ from .schemas import (
 )
 
 # Make the schemas module available as models.schemas
-sys.modules[__name__ + '.schemas'] = schemas
+sys.modules[__name__ + ".schemas"] = schemas
 
 # Also make it available as models.models for backward compatibility
-sys.modules[__name__ + '.models'] = schemas
+sys.modules[__name__ + ".models"] = schemas
 
 # Make schemas available as models for backward compatibility
 models = schemas
 
 __all__ = [
-    'BaseModel',
-    'schemas',
-    'models',  # For backward compatibility
-    'ReadFileArgs', 'ReadMultipleFilesArgs', 'WriteFileArgs', 'EditOperation',
-    'EditFileArgs', 'CreateDirectoryArgs', 'ListDirectoryArgs', 'DirectoryTreeArgs',
-    'MoveFileArgs', 'SearchFilesArgs', 'GetFileInfoArgs', 'FileInfo', 'TreeEntry',
-    'DirectoryEntryItem', 'FileContentResult'
+    "BaseModel",
+    "schemas",
+    "models",  # For backward compatibility
+    "ReadFileArgs",
+    "ReadMultipleFilesArgs",
+    "WriteFileArgs",
+    "EditOperation",
+    "EditFileArgs",
+    "CreateDirectoryArgs",
+    "ListDirectoryArgs",
+    "DirectoryTreeArgs",
+    "MoveFileArgs",
+    "SearchFilesArgs",
+    "GetFileInfoArgs",
+    "FileInfo",
+    "TreeEntry",
+    "DirectoryEntryItem",
+    "FileContentResult",
 ]

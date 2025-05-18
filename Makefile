@@ -103,5 +103,8 @@ clean:
 # Run all checks (format check, lint, test)
 check: check-format lint test
 
-# Run all checks and auto-format
-all: format lint test
+# Run all checks with auto-formatting
+# 1. First formats the code
+# 2. Verifies formatting is correct
+# 3. Runs lint and tests
+all: format check-format lint test
