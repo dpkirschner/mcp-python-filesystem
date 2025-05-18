@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import List
 
@@ -26,10 +27,7 @@ class ReadFileTool(base.BaseTool):
     async def read_file(self, args: models.ReadFileArgs) -> TextContent:
         valid_path = await self.fs_context.validate_path(args.path)
         content = await self.fs_context._read_file_async(
-            valid_path,
-            offset=args.offset,
-            length=args.length,
-            encoding=args.encoding
+            valid_path, offset=args.offset, length=args.length, encoding=args.encoding
         )
         return TextContent(type="text", text=content)
 
@@ -107,14 +105,35 @@ class WriteFileTool(base.BaseTool):
 
     async def write_file(self, args: models.WriteFileArgs) -> TextContent:
         valid_path = await self.fs_context.validate_path(
-            args.path, check_existence=False, is_for_write=True
+            args.path, check_existence=(args.mode == "append"), is_for_write=True
         )
+
+        # Create parent directories if they don't exist
         if not valid_path.parent.exists():
             await self.fs_context._mkdir_async(
                 valid_path.parent, parents=True, exist_ok=True
             )
-        await self.fs_context._write_file_async(valid_path, args.content)
-        return TextContent(type="text", text=f"Successfully wrote to {args.path}")
+
+        # Handle append mode
+        if args.mode == "append" and valid_path.exists():
+            # Read existing content and append new content
+            existing_content = await self.fs_context._read_file_async(valid_path)
+            new_content = existing_content + args.content
+        else:
+            # Overwrite mode or new file
+            new_content = args.content
+
+        # Write the content
+        await self.fs_context._write_file_async(valid_path, new_content)
+
+        # Determine the action for the success message
+        file_exists = (
+            await asyncio.to_thread(lambda: valid_path.exists())
+            if hasattr(valid_path, "exists")
+            else False
+        )
+        action = "appended to" if args.mode == "append" and file_exists else "wrote to"
+        return TextContent(type="text", text=f"Successfully {action} {args.path}")
 
     # Register the tool with the MCP server
     def register_tools(self) -> None:

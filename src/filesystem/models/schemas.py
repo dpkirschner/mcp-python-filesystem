@@ -11,16 +11,16 @@ class ReadFileArgs(BaseModel):
     offset: Optional[int] = Field(
         default=0,
         ge=0,
-        description="The position in the file to start reading from (in bytes)."
+        description="The position in the file to start reading from (in bytes).",
     )
     length: Optional[int] = Field(
         default=None,
         gt=0,
-        description="Maximum number of bytes to read. If None, reads to the end of the file."
+        description="Maximum number of bytes to read. If None, reads to the end of the file.",
     )
     encoding: str = Field(
         default="utf-8",
-        description="The encoding to use when reading the file (e.g., 'utf-8', 'latin-1')."
+        description="The encoding to use when reading the file (e.g., 'utf-8', 'latin-1').",
     )
 
 
@@ -31,6 +31,24 @@ class ReadMultipleFilesArgs(BaseModel):
 class WriteFileArgs(BaseModel):
     path: str
     content: str
+    mode: str = Field(
+        default="overwrite",
+        description="File write mode: 'overwrite' (default) to replace file contents, 'append' to add to the end of the file",
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "path": "/path/to/file.txt",
+                "content": "File content",
+                "mode": "overwrite",
+            }
+        }
+
+    def __init__(self, **data: object) -> None:
+        super().__init__(**data)
+        if self.mode not in ["overwrite", "append"]:
+            raise ValueError("Mode must be either 'overwrite' or 'append'")
 
 
 class EditOperation(BaseModel):

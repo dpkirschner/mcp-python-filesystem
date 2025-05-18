@@ -24,7 +24,6 @@ class TestReadFileTool:
         # Execute
         result = await tool.read_file(args)
 
-
         # Verify
         assert isinstance(result, TextContent)
         assert "This is a test file" in result.text
@@ -39,7 +38,7 @@ class TestReadFileTool:
         content = "0123456789"
         sample_file.write_text(content)
         tool = file_operations.ReadFileTool(mcp_server, fs_context)
-        
+
         # Test reading from offset 5
         args = schemas.ReadFileArgs(path=str(sample_file), offset=5)
         result = await tool.read_file(args)
@@ -55,7 +54,7 @@ class TestReadFileTool:
         content = "0123456789"
         sample_file.write_text(content)
         tool = file_operations.ReadFileTool(mcp_server, fs_context)
-        
+
         # Test reading first 3 bytes
         args = schemas.ReadFileArgs(path=str(sample_file), length=3)
         result = await tool.read_file(args)
@@ -71,7 +70,7 @@ class TestReadFileTool:
         content = "0123456789"
         sample_file.write_text(content)
         tool = file_operations.ReadFileTool(mcp_server, fs_context)
-        
+
         # Test reading 3 bytes starting from offset 2
         args = schemas.ReadFileArgs(path=str(sample_file), offset=2, length=3)
         result = await tool.read_file(args)
@@ -87,13 +86,13 @@ class TestReadFileTool:
         tool = file_operations.ReadFileTool(mcp_server, fs_context)
         file_path = temp_dir / "latin1.txt"
         content = "café"  # 'é' is a non-ASCII character
-        file_path.write_bytes(content.encode('latin-1'))
-        
+        file_path.write_bytes(content.encode("latin-1"))
+
         # Test reading with correct encoding
         args = schemas.ReadFileArgs(path=str(file_path), encoding="latin-1")
         result = await tool.read_file(args)
         assert result.text == content
-        
+
         # Test reading with wrong encoding (should still work but might show replacement chars)
         args.encoding = "utf-8"
         result = await tool.read_file(args)
@@ -113,7 +112,7 @@ class TestReadFileTool:
         with pytest.raises(Exception) as exc_info:
             await tool.read_file(args)
         assert "does not exist" in str(exc_info.value)
-        
+
     async def test_read_file_invalid_offset(
         self: "TestReadFileTool",
         mcp_server: FastMCP,
@@ -121,12 +120,12 @@ class TestReadFileTool:
         sample_file: Path,
     ) -> None:
         # Setup
-        tool = file_operations.ReadFileTool(mcp_server, fs_context)
-        
+        file_operations.ReadFileTool(mcp_server, fs_context)
+
         # Test negative offset (should be validated by Pydantic)
         with pytest.raises(ValueError):
             schemas.ReadFileArgs(path=str(sample_file), offset=-1)
-            
+
     async def test_read_file_invalid_length(
         self: "TestReadFileTool",
         mcp_server: FastMCP,
@@ -134,8 +133,8 @@ class TestReadFileTool:
         sample_file: Path,
     ) -> None:
         # Setup
-        tool = file_operations.ReadFileTool(mcp_server, fs_context)
-        
+        file_operations.ReadFileTool(mcp_server, fs_context)
+
         # Test zero or negative length (should be validated by Pydantic)
         with pytest.raises(ValueError):
             schemas.ReadFileArgs(path=str(sample_file), length=0)
@@ -238,6 +237,7 @@ class TestWriteFileTool:
         )
         mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
         mock_write = mocker.patch.object(fs_context, "_write_file_async")
+        mock_read = mocker.patch.object(fs_context, "_read_file_async")
 
         # Make parent directory not exist
         mock_parent = mocker.MagicMock()
@@ -247,6 +247,7 @@ class TestWriteFileTool:
             new_callable=mocker.PropertyMock(return_value=mock_parent),
         )
 
+        # Test with default mode (overwrite)
         args = schemas.WriteFileArgs(path=file_path, content=content)
 
         # Execute
@@ -262,6 +263,121 @@ class TestWriteFileTool:
         )
         mock_mkdir.assert_called_once_with(mock_parent, parents=True, exist_ok=True)
         mock_write.assert_called_once_with(Path(file_path), content)
+        mock_read.assert_not_called()  # Should not read in overwrite mode
+
+    async def test_append_to_existing_file(
+        self: "TestWriteFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        temp_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        # Setup - append to an existing file
+        tool = file_operations.WriteFileTool(mcp_server, fs_context)
+        file_path = str(temp_dir / "existing_file.txt")
+        existing_content = "Existing content\n"
+        new_content = "New content to append"
+        expected_content = existing_content + new_content
+
+        # Create a real file for testing
+        file_path_obj = Path(file_path)
+        file_path_obj.parent.mkdir(parents=True, exist_ok=True)
+        file_path_obj.write_text(existing_content)
+
+        try:
+            # Mock the filesystem methods
+            mock_validate = mocker.patch.object(
+                fs_context, "validate_path", return_value=file_path_obj
+            )
+            mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
+            mock_write = mocker.patch.object(fs_context, "_write_file_async")
+            mock_read = mocker.patch.object(
+                fs_context, "_read_file_async", return_value=existing_content
+            )
+
+            # Test append mode
+            args = schemas.WriteFileArgs(
+                path=file_path, content=new_content, mode="append"
+            )
+
+            # Execute
+            result = await tool.write_file(args)
+
+            # Verify
+            assert isinstance(result, TextContent)
+            # Check that the success message indicates the file was written to
+            assert f"Successfully appended to {file_path}" == result.text
+
+            # Verify mocks were called correctly
+            mock_validate.assert_called_once_with(
+                file_path, check_existence=True, is_for_write=True
+            )
+            mock_mkdir.assert_not_called()  # Parent dir exists
+            mock_read.assert_called_once()  # Should read existing content
+            mock_write.assert_called_once_with(file_path_obj, expected_content)
+        finally:
+            # Clean up
+            if file_path_obj.exists():
+                file_path_obj.unlink()
+
+    async def test_append_to_nonexistent_file(
+        self: "TestWriteFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        temp_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        # Setup - append to a non-existent file (should create it)
+        tool = file_operations.WriteFileTool(mcp_server, fs_context)
+        file_path = str(temp_dir / "new_file.txt")
+        content = "New content"
+
+        # Mock the filesystem methods
+        mock_validate = mocker.patch.object(
+            fs_context, "validate_path", return_value=Path(file_path)
+        )
+        mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
+        mock_write = mocker.patch.object(fs_context, "_write_file_async")
+        mock_read = mocker.patch.object(fs_context, "_read_file_async")
+
+        # Make the file not exist
+        mock_path = mocker.MagicMock()
+        mock_path.exists.return_value = False
+        mock_path.parent.exists.return_value = True
+        mocker.patch("pathlib.Path", return_value=mock_path)
+
+        # Test append mode with non-existent file
+        args = schemas.WriteFileArgs(path=file_path, content=content, mode="append")
+
+        # Execute
+        result = await tool.write_file(args)
+
+        # Verify
+        assert isinstance(result, TextContent)
+        assert (
+            f"Successfully wrote to {file_path}" == result.text
+        )  # Should not say 'appended to'
+
+        # Verify mocks were called correctly
+        mock_validate.assert_called_once_with(
+            file_path, check_existence=True, is_for_write=True
+        )
+        mock_mkdir.assert_not_called()  # Parent dir exists
+        mock_read.assert_not_called()  # Should not try to read non-existent file
+        mock_write.assert_called_once_with(
+            Path(file_path), content
+        )  # Should write new content
+
+    async def test_invalid_mode_raises_error(
+        self: "TestWriteFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+    ) -> None:
+        # Test that an invalid mode raises a ValueError
+        with pytest.raises(
+            ValueError, match="Mode must be either 'overwrite' or 'append'"
+        ):
+            schemas.WriteFileArgs(path="/test.txt", content="test", mode="invalid")
 
 
 class TestEditFileTool:

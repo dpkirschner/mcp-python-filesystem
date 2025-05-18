@@ -123,10 +123,11 @@ class FilesystemContext:
     async def _read_file_async(
         self,
         path: Path,
-        offset: int = 0,
+        offset: Optional[int] = None,
         length: Optional[int] = None,
-        encoding: str = "utf-8"
+        encoding: str = "utf-8",
     ) -> str:
+        offset = offset or 0
         if not HAS_AIO:
             with path.open("rb") as f:
                 if offset > 0:
