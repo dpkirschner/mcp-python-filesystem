@@ -93,12 +93,6 @@ omit = ["tests/*"]
 exclude_lines = ["pragma: no cover", "def __repr__", "raise ImportError", "raise NotImplementedError"]
 
 [tool.ruff]
-# Enable basic rules
-select = [
-  "E",   # pycodestyle errors
-  "F",   # pyflakes
-  "I",   # isort
-]
 # Exclude directories
 exclude = [
   ".git",
@@ -114,10 +108,18 @@ exclude = [
 line-length = 88
 # Auto-fix mode
 target-version = "py310"
+
+[tool.ruff.lint]
+# Enable basic rules
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+]
 extend-ignore = ["E501"]
 
 # Enable isort
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["filesystem"]
 
 [tool.uv]
