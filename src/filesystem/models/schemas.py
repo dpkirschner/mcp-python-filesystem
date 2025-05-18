@@ -115,6 +115,7 @@ class DirectoryEntryItem(BaseModel):
     type: str  # "file" or "directory"
     size: Optional[int] = None
     modified_timestamp: Optional[datetime] = None
+    error: Optional[str] = None
 
 
 class FileContentResult(BaseModel):
