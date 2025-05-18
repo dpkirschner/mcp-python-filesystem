@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 try:
     import aiofiles
@@ -118,11 +120,39 @@ class FilesystemContext:
                 )
             )
 
-    async def _read_file_async(self, path: Path) -> str:
+    async def _read_file_async(
+        self,
+        path: Path,
+        offset: int = 0,
+        length: Optional[int] = None,
+        encoding: str = "utf-8"
+    ) -> str:
         if not HAS_AIO:
-            return path.read_text(encoding="utf-8")
-        async with aiofiles.open(path, "r", encoding="utf-8") as f:
-            return await f.read()
+            with path.open("rb") as f:
+                if offset > 0:
+                    f.seek(offset)
+                if length is not None:
+                    content = f.read(length)
+                else:
+                    content = f.read()
+                try:
+                    return content.decode(encoding)
+                except UnicodeDecodeError:
+                    # If decoding fails, return a string representation of the bytes
+                    return str(content)
+        else:
+            async with aiofiles.open(path, "rb") as f:
+                if offset > 0:
+                    await f.seek(offset)
+                if length is not None:
+                    content = await f.read(length)
+                else:
+                    content = await f.read()
+                try:
+                    return content.decode(encoding)
+                except UnicodeDecodeError:
+                    # If decoding fails, return a string representation of the bytes
+                    return str(content)
 
     async def _write_file_async(self, path: Path, content: str) -> int | None:
         if not HAS_AIO:

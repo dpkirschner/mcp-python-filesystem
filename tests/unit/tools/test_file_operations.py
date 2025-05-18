@@ -24,9 +24,80 @@ class TestReadFileTool:
         # Execute
         result = await tool.read_file(args)
 
+
         # Verify
         assert isinstance(result, TextContent)
         assert "This is a test file" in result.text
+
+    async def test_read_file_with_offset(
+        self: "TestReadFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        sample_file: Path,
+    ) -> None:
+        # Setup - write known content
+        content = "0123456789"
+        sample_file.write_text(content)
+        tool = file_operations.ReadFileTool(mcp_server, fs_context)
+        
+        # Test reading from offset 5
+        args = schemas.ReadFileArgs(path=str(sample_file), offset=5)
+        result = await tool.read_file(args)
+        assert result.text == "56789"
+
+    async def test_read_file_with_length(
+        self: "TestReadFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        sample_file: Path,
+    ) -> None:
+        # Setup - write known content
+        content = "0123456789"
+        sample_file.write_text(content)
+        tool = file_operations.ReadFileTool(mcp_server, fs_context)
+        
+        # Test reading first 3 bytes
+        args = schemas.ReadFileArgs(path=str(sample_file), length=3)
+        result = await tool.read_file(args)
+        assert result.text == "012"
+
+    async def test_read_file_with_offset_and_length(
+        self: "TestReadFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        sample_file: Path,
+    ) -> None:
+        # Setup - write known content
+        content = "0123456789"
+        sample_file.write_text(content)
+        tool = file_operations.ReadFileTool(mcp_server, fs_context)
+        
+        # Test reading 3 bytes starting from offset 2
+        args = schemas.ReadFileArgs(path=str(sample_file), offset=2, length=3)
+        result = await tool.read_file(args)
+        assert result.text == "234"
+
+    async def test_read_file_with_encoding(
+        self: "TestReadFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        temp_dir: Path,
+    ) -> None:
+        # Setup - create a file with non-UTF-8 encoding
+        tool = file_operations.ReadFileTool(mcp_server, fs_context)
+        file_path = temp_dir / "latin1.txt"
+        content = "café"  # 'é' is a non-ASCII character
+        file_path.write_bytes(content.encode('latin-1'))
+        
+        # Test reading with correct encoding
+        args = schemas.ReadFileArgs(path=str(file_path), encoding="latin-1")
+        result = await tool.read_file(args)
+        assert result.text == content
+        
+        # Test reading with wrong encoding (should still work but might show replacement chars)
+        args.encoding = "utf-8"
+        result = await tool.read_file(args)
+        assert "caf" in result.text  # First part should be readable
 
     async def test_read_file_not_found(
         self: "TestReadFileTool",
@@ -42,6 +113,34 @@ class TestReadFileTool:
         with pytest.raises(Exception) as exc_info:
             await tool.read_file(args)
         assert "does not exist" in str(exc_info.value)
+        
+    async def test_read_file_invalid_offset(
+        self: "TestReadFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        sample_file: Path,
+    ) -> None:
+        # Setup
+        tool = file_operations.ReadFileTool(mcp_server, fs_context)
+        
+        # Test negative offset (should be validated by Pydantic)
+        with pytest.raises(ValueError):
+            schemas.ReadFileArgs(path=str(sample_file), offset=-1)
+            
+    async def test_read_file_invalid_length(
+        self: "TestReadFileTool",
+        mcp_server: FastMCP,
+        fs_context: FilesystemContext,
+        sample_file: Path,
+    ) -> None:
+        # Setup
+        tool = file_operations.ReadFileTool(mcp_server, fs_context)
+        
+        # Test zero or negative length (should be validated by Pydantic)
+        with pytest.raises(ValueError):
+            schemas.ReadFileArgs(path=str(sample_file), length=0)
+        with pytest.raises(ValueError):
+            schemas.ReadFileArgs(path=str(sample_file), length=-1)
 
 
 class TestReadMultipleFilesTool:

@@ -25,7 +25,12 @@ class ReadFileTool(base.BaseTool):
 
     async def read_file(self, args: models.ReadFileArgs) -> TextContent:
         valid_path = await self.fs_context.validate_path(args.path)
-        content = await self.fs_context._read_file_async(valid_path)
+        content = await self.fs_context._read_file_async(
+            valid_path,
+            offset=args.offset,
+            length=args.length,
+            encoding=args.encoding
+        )
         return TextContent(type="text", text=content)
 
     # Register the tool with the MCP server
