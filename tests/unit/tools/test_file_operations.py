@@ -1,8 +1,11 @@
 import stat
+import pytest
 from datetime import datetime
 from pathlib import Path
+from typing import cast
+from unittest.mock import MagicMock, patch
 
-import pytest
+from mcp import McpError
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
 from pytest_mock import MockerFixture
@@ -444,11 +447,10 @@ class TestGetFileInfoTool:
         non_existent_file = temp_dir / "nonexistent.txt"
         args = schemas.GetFileInfoArgs(path=str(non_existent_file))
 
-        # Execute & Verify
-        with pytest.raises(Exception) as exc_info:
+        # Execute & Verify - validate_path will raise McpError before _get_stat is called
+        with pytest.raises(McpError) as exc_info:
             await tool.get_file_info(args)
-        # The error could be either FileNotFoundError or McpError, depending on where it's caught
-        assert isinstance(exc_info.value, (FileNotFoundError, Exception))
+        assert "Path does not exist" in str(exc_info.value)
 
     async def test_get_file_info_with_mock(
         self: "TestGetFileInfoTool",
