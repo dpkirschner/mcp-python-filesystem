@@ -31,7 +31,9 @@ test = [
   "isort",
   "mypy",
   "ruff",
-  "types-aiofiles"
+  "types-aiofiles",
+  "pip-audit>=2.9.0",
+  "bandit>=1.8.3"
 ]
 all = ["pypdf", "python-magic"] # Updated: 'pillow' removed, 'aiofiles' is now core
 

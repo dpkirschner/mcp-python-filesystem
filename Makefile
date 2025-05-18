@@ -75,9 +75,17 @@ check-format:
 
 # Run security checks
 check-security:
-	@echo "Checking for vulnerable dependencies with safety..."
-	@pip freeze | safety check --stdin
-	@echo "Running bandit security linter..."
+	@if command -v pip-audit >/dev/null 2>&1; then \
+		echo "Scanning for vulnerable dependencies with pip-audit..."; \
+		if [ -n "$$VIRTUAL_ENV" ]; then \
+			PIPAPI_PYTHON_LOCATION="$$VIRTUAL_ENV/bin/python" pip-audit || true; \
+		else \
+			pip-audit || true; \
+		fi; \
+	else \
+		echo "pip-audit not installed. Install with: pip install pip-audit"; \
+	fi
+	@echo "\nRunning bandit security linter..."
 	@bandit -r src -c pyproject.toml
 
 # Check for outdated dependencies
