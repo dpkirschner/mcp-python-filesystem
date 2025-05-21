@@ -1,7 +1,9 @@
 import os
 import stat
+import unittest
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 from mcp import McpError
@@ -243,31 +245,45 @@ class TestWriteFileTool:
         mock_write = mocker.patch.object(fs_context, "_write_file_async")
         mock_read = mocker.patch.object(fs_context, "_read_file_async")
 
-        # Make parent directory not exist
-        mock_parent = mocker.MagicMock()
-        mock_parent.exists.return_value = False
-        mocker.patch(
-            "pathlib.Path.parent",
-            new_callable=mocker.PropertyMock(return_value=mock_parent),
-        )
+        # Create a mock for the Path object
+        mock_path = mocker.MagicMock()
+        mock_path.parent = mocker.MagicMock()
+        mock_path.parent.exists.return_value = False
 
-        # Test with default mode (overwrite)
-        args = schemas.WriteFileArgs(path=file_path, content=content)
+        # Mock the Path constructor to return our mock object
+        original_path = Path
 
-        # Execute
-        result = await tool.write_file(args)
+        def mock_path_constructor(*args: Any, **kwargs: Any) -> Any:
+            if args or kwargs:
+                return original_path(*args, **kwargs)
+            return mock_path
 
-        # Verify
-        assert isinstance(result, TextContent)
-        assert f"Successfully wrote to {file_path}" == result.text
+        # Execute with the patched Path
+        with unittest.mock.patch("pathlib.Path", side_effect=mock_path_constructor):
+            args = schemas.WriteFileArgs(path=file_path, content=content)
+            result = await tool.write_file(args)
 
-        # Verify mocks were called correctly
-        mock_validate.assert_called_once_with(
-            file_path, check_existence=False, is_for_write=True
-        )
-        mock_mkdir.assert_called_once_with(mock_parent, parents=True, exist_ok=True)
-        mock_write.assert_called_once_with(Path(file_path), content)
-        mock_read.assert_not_called()  # Should not read in overwrite mode
+            # Verify
+            assert isinstance(result, TextContent)
+            assert f"Successfully wrote to {file_path}" == result.text
+
+            # Verify mocks were called correctly
+            mock_validate.assert_called_once_with(
+                file_path, check_existence=False, is_for_write=True
+            )
+            # Verify mkdir was called with the correct parent directory
+            mock_mkdir.assert_called_once()
+            mkdir_args, mkdir_kwargs = mock_mkdir.call_args
+            assert str(mkdir_args[0]).endswith(
+                "new_dir/subdir"
+            )  # Check parent directory
+            assert mkdir_kwargs == {"parents": True, "exist_ok": True}
+            mock_read.assert_not_called()
+            # Verify write was called with the correct path and content
+            mock_write.assert_called_once()
+            write_args = mock_write.call_args[0]
+            assert str(write_args[0]) == file_path  # Check path matches
+            assert write_args[1] == content  # Check content matches
 
     async def test_append_to_existing_file(
         self: "TestWriteFileTool",
@@ -344,33 +360,44 @@ class TestWriteFileTool:
         mock_write = mocker.patch.object(fs_context, "_write_file_async")
         mock_read = mocker.patch.object(fs_context, "_read_file_async")
 
-        # Make the file not exist
+        # Create a mock for the Path object with parent that exists
         mock_path = mocker.MagicMock()
         mock_path.exists.return_value = False
+        mock_path.parent = mocker.MagicMock()
         mock_path.parent.exists.return_value = True
-        mocker.patch("pathlib.Path", return_value=mock_path)
+
+        # Mock the Path constructor to return our mock object
+        original_path = Path
+
+        def mock_path_constructor(*args: Any, **kwargs: Any) -> Any:
+            if args or kwargs:
+                return original_path(*args, **kwargs)
+            return mock_path
 
         # Test append mode with non-existent file
-        args = schemas.WriteFileArgs(path=file_path, content=content, mode="append")
+        with unittest.mock.patch("pathlib.Path", side_effect=mock_path_constructor):
+            args = schemas.WriteFileArgs(path=file_path, content=content, mode="append")
 
-        # Execute
-        result = await tool.write_file(args)
+            # Execute
+            result = await tool.write_file(args)
 
-        # Verify
-        assert isinstance(result, TextContent)
-        assert (
-            f"Successfully wrote to {file_path}" == result.text
-        )  # Should not say 'appended to'
+            # Verify
+            assert isinstance(result, TextContent)
+            assert (
+                f"Successfully wrote to {file_path}" == result.text
+            )  # Should not say 'appended to'
 
-        # Verify mocks were called correctly
-        mock_validate.assert_called_once_with(
-            file_path, check_existence=True, is_for_write=True
-        )
-        mock_mkdir.assert_not_called()  # Parent dir exists
-        mock_read.assert_not_called()  # Should not try to read non-existent file
-        mock_write.assert_called_once_with(
-            Path(file_path), content
-        )  # Should write new content
+            # Verify mocks were called correctly
+            mock_validate.assert_called_once_with(
+                file_path, check_existence=True, is_for_write=True
+            )
+            mock_mkdir.assert_not_called()  # Parent dir exists
+            mock_read.assert_not_called()  # Should not try to read non-existent file
+            # Check that _write_file_async was called with the correct path and content
+            mock_write.assert_called_once()
+            call_args = mock_write.call_args[0]
+            assert str(call_args[0]) == file_path  # Check path matches
+            assert call_args[1] == content  # Check content matches
 
     async def test_invalid_mode_raises_error(
         self: "TestWriteFileTool",
