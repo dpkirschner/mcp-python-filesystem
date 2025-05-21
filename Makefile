@@ -34,7 +34,8 @@ test:
 
 # Run unit tests only
 test-unit:
-	pytest tests/unit/
+	@echo "Running unit tests..."
+	@pytest tests/unit/ -v --cache-clear
 
 # Run integration tests only
 test-integration:
