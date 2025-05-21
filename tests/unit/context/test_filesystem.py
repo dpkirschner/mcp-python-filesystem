@@ -1,10 +1,8 @@
-import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from mcp.shared.exceptions import McpError
-from mcp.types import INVALID_PARAMS
 
 
 class TestFilesystemContext:
@@ -121,7 +119,7 @@ class TestFilesystemContext:
     ) -> None:
         """Test path validation for write operations with non-existent parent directories."""
         new_file = temp_dir / "new_dir" / "subdir" / "new_file.txt"
-        
+
         # Should not raise and should return the resolved path
         result = await fs_context.validate_path(
             str(new_file), check_existence=False, is_for_write=True
@@ -166,7 +164,7 @@ class TestFilesystemContext:
         test_content = "Testing fallback mechanism"
         test_file.write_text(test_content)
 
-        with patch.dict('sys.modules', {'aiofiles': None} if not has_aiofiles else {}):
+        with patch.dict("sys.modules", {"aiofiles": None} if not has_aiofiles else {}):
             content = await fs_context._read_file_async(test_file)
             assert content == test_content
 
@@ -177,23 +175,26 @@ class TestFilesystemContext:
         test_file = temp_dir / "test_write_fallback.txt"
         test_content = "Testing write fallback"
 
-        with patch.dict('sys.modules', {'aiofiles': None}):
+        with patch.dict("sys.modules", {"aiofiles": None}):
             await fs_context._write_file_async(test_file, test_content)
             assert test_file.read_text() == test_content
 
-    async def test_get_stat_success(self, fs_context: AsyncMock, temp_dir: Path) -> None:
+    async def test_get_stat_success(
+        self, fs_context: AsyncMock, temp_dir: Path
+    ) -> None:
         """Test successful stat retrieval."""
         test_file = temp_dir / "stat_test.txt"
         test_file.write_text("test")
-        
+
         stat_result = await fs_context._get_stat(test_file)
         assert stat_result is not None
         assert stat_result.st_size == 4  # Length of "test"
 
-
-    async def test_get_stat_not_found(self, fs_context: AsyncMock, temp_dir: Path) -> None:
+    async def test_get_stat_not_found(
+        self, fs_context: AsyncMock, temp_dir: Path
+    ) -> None:
         """Test stat retrieval for non-existent file raises FileNotFoundError."""
         non_existent = temp_dir / "nonexistent.txt"
-        
+
         with pytest.raises(FileNotFoundError):
             await fs_context._get_stat(non_existent)
