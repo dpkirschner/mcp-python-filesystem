@@ -38,11 +38,13 @@ test = [
 all = ["pypdf", "python-magic"] # Updated: 'pillow' removed, 'aiofiles' is now core
 
 [project.scripts]
-# Assuming your Python script is saved as src/filesystem/main.py
-filesystem-server-start = "filesystem.main:main"
+filesystem-server-start = "filesystem.server.main:main_cli"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["src"] # Tells setuptools to find your package in the 'src' directory
+where = ["src"]
 
 [build-system]
 requires = ["setuptools>=65", "wheel"]
