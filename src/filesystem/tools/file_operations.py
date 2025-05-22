@@ -1,7 +1,7 @@
 import asyncio
+from datetime import datetime
 import logging
 import mimetypes
-from datetime import datetime
 
 from mcp.types import TextContent
 
@@ -110,9 +110,7 @@ class GetFileInfoTool(base.BaseTool):
 class ReadMultipleFilesTool(base.BaseTool):
     """Tool for reading multiple files."""
 
-    async def execute(
-        self, args: models.ReadMultipleFilesArgs
-    ) -> list[models.FileContentResult]:
+    async def execute(self, args: models.ReadMultipleFilesArgs) -> list[models.FileContentResult]:
         """Execute the multiple files read operation.
 
         Args:
@@ -124,9 +122,7 @@ class ReadMultipleFilesTool(base.BaseTool):
         return await self.read_multiple_files(args)
 
     @flat_args(models.ReadMultipleFilesArgs)
-    async def read_multiple_files(
-        self, args: models.ReadMultipleFilesArgs
-    ) -> list[models.FileContentResult]:
+    async def read_multiple_files(self, args: models.ReadMultipleFilesArgs) -> list[models.FileContentResult]:
         """Read multiple files and return their contents.
 
         Args:
@@ -142,9 +138,7 @@ class ReadMultipleFilesTool(base.BaseTool):
                 content = await self.fs_context._read_file_async(valid_path)
                 results.append(models.FileContentResult(path=path, content=content))
             except Exception as e:
-                results.append(
-                    models.FileContentResult(path=path, content=None, error=str(e))
-                )
+                results.append(models.FileContentResult(path=path, content=None, error=str(e)))
         return results
 
     # Register the tool with the MCP server
@@ -172,15 +166,11 @@ class WriteFileTool(base.BaseTool):
 
     @flat_args(models.WriteFileArgs)
     async def write_file(self, args: models.WriteFileArgs) -> TextContent:
-        valid_path = await self.fs_context.validate_path(
-            args.path, check_existence=(args.mode == "append"), is_for_write=True
-        )
+        valid_path = await self.fs_context.validate_path(args.path, check_existence=(args.mode == "append"), is_for_write=True)
 
         # Create parent directories if they don't exist
         if not valid_path.parent.exists():
-            await self.fs_context._mkdir_async(
-                valid_path.parent, parents=True, exist_ok=True
-            )
+            await self.fs_context._mkdir_async(valid_path.parent, parents=True, exist_ok=True)
 
         # Handle append mode
         if args.mode == "append" and valid_path.exists():
@@ -195,11 +185,7 @@ class WriteFileTool(base.BaseTool):
         await self.fs_context._write_file_async(valid_path, new_content)
 
         # Determine the action for the success message
-        file_exists = (
-            await asyncio.to_thread(lambda: valid_path.exists())
-            if hasattr(valid_path, "exists")
-            else False
-        )
+        file_exists = await asyncio.to_thread(lambda: valid_path.exists()) if hasattr(valid_path, "exists") else False
         action = "appended to" if args.mode == "append" and file_exists else "wrote to"
         return TextContent(type="text", text=f"Successfully {action} {args.path}")
 
@@ -226,9 +212,7 @@ class EditFileTool(base.BaseTool):
 
     @flat_args(models.EditFileArgs)
     async def edit_file(self, args: models.EditFileArgs) -> TextContent:
-        valid_path = await self.fs_context.validate_path(
-            args.path, is_for_write=True, check_existence=True
-        )
+        valid_path = await self.fs_context.validate_path(args.path, is_for_write=True, check_existence=True)
         original_content = await self.fs_context._read_file_async(valid_path)
         original_content_norm = original_content.replace("\r\n", "\n")
         modified_content_norm = original_content_norm
@@ -237,13 +221,9 @@ class EditFileTool(base.BaseTool):
             old_text_norm = edit.oldText.replace("\r\n", "\n")
             new_text_norm = edit.newText.replace("\r\n", "\n")
             if old_text_norm in modified_content_norm:
-                modified_content_norm = modified_content_norm.replace(
-                    old_text_norm, new_text_norm
-                )
+                modified_content_norm = modified_content_norm.replace(old_text_norm, new_text_norm)
             else:
-                logger.warning(
-                    f"Edit 'oldText' not found for exact replacement: '{edit.oldText[:50]}...'"
-                )
+                logger.warning(f"Edit 'oldText' not found for exact replacement: '{edit.oldText[:50]}...'")
 
         # Return appropriate message based on dryRun flag
         if getattr(args, "dryRun", False):
@@ -251,9 +231,7 @@ class EditFileTool(base.BaseTool):
         else:
             # Only write back if content was actually modified
             if modified_content_norm != original_content_norm:
-                await self.fs_context._write_file_async(
-                    valid_path, modified_content_norm
-                )
+                await self.fs_context._write_file_async(valid_path, modified_content_norm)
             return TextContent(type="text", text=f"Successfully edited {args.path}")
 
     # Register the tool with the MCP server

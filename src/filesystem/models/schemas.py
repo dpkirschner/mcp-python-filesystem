@@ -32,7 +32,8 @@ class WriteFileArgs(BaseModel):
     content: str
     mode: str = Field(
         default="overwrite",
-        description="File write mode: 'overwrite' (default) to replace file contents, 'append' to add to the end of the file",
+        description="""File write mode: 'overwrite' (default) to replace file contents, 
+        'append' to add to the end of the file""",
     )
 
     class Config:
@@ -58,9 +59,7 @@ class EditOperation(BaseModel):
 class EditFileArgs(BaseModel):
     path: str
     edits: list[EditOperation]
-    dryRun: bool = Field(
-        default=False, description="Preview changes using git-style diff format"
-    )
+    dryRun: bool = Field(default=False, description="Preview changes using git-style diff format")
 
 
 class CreateDirectoryArgs(BaseModel):
@@ -75,7 +74,7 @@ class ListDirectoryArgs(BaseModel):
     )
     pattern: str | None = Field(
         default=None,
-        description="Optional glob pattern to filter directory entries by name (e.g., '*.txt' for .txt files)",
+        description="Optional glob pattern to filter files by name (e.g., '*.txt' for .txt files)",
     )
 
 

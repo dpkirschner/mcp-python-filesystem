@@ -1,14 +1,14 @@
-import os
-import stat
-import unittest
 from datetime import datetime
+import os
 from pathlib import Path
+import stat
 from typing import Any
+import unittest
 
-import pytest
 from mcp import McpError
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
+import pytest
 from pytest_mock import MockerFixture
 
 from filesystem.context.filesystem import FilesystemContext
@@ -163,9 +163,7 @@ class TestReadMultipleFilesTool:
         file2.write_text("Content 2")
 
         tool = file_operations.ReadMultipleFilesTool(mcp_server, fs_context)
-        args = schemas.ReadMultipleFilesArgs(
-            paths=[str(file1), str(file2), str(temp_dir / "nonexistent.txt")]
-        )
+        args = schemas.ReadMultipleFilesArgs(paths=[str(file1), str(file2), str(temp_dir / "nonexistent.txt")])
 
         # Execute
         results = await tool.read_multiple_files(args)
@@ -203,9 +201,7 @@ class TestWriteFileTool:
         content = "New file content"
 
         # Mock the filesystem methods
-        mock_validate = mocker.patch.object(
-            fs_context, "validate_path", return_value=Path(file_path)
-        )
+        mock_validate = mocker.patch.object(fs_context, "validate_path", return_value=Path(file_path))
         mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
         mock_write = mocker.patch.object(fs_context, "_write_file_async")
 
@@ -219,9 +215,7 @@ class TestWriteFileTool:
         assert f"Successfully wrote to {file_path}" == result.text
 
         # Verify mocks were called correctly
-        mock_validate.assert_called_once_with(
-            file_path, check_existence=False, is_for_write=True
-        )
+        mock_validate.assert_called_once_with(file_path, check_existence=False, is_for_write=True)
         mock_mkdir.assert_not_called()  # Parent dir exists, so mkdir shouldn't be called
         mock_write.assert_called_once_with(Path(file_path), content)
 
@@ -238,9 +232,7 @@ class TestWriteFileTool:
         content = "New file in new directory"
 
         # Mock the filesystem methods
-        mock_validate = mocker.patch.object(
-            fs_context, "validate_path", return_value=Path(file_path)
-        )
+        mock_validate = mocker.patch.object(fs_context, "validate_path", return_value=Path(file_path))
         mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
         mock_write = mocker.patch.object(fs_context, "_write_file_async")
         mock_read = mocker.patch.object(fs_context, "_read_file_async")
@@ -268,15 +260,11 @@ class TestWriteFileTool:
             assert f"Successfully wrote to {file_path}" == result.text
 
             # Verify mocks were called correctly
-            mock_validate.assert_called_once_with(
-                file_path, check_existence=False, is_for_write=True
-            )
+            mock_validate.assert_called_once_with(file_path, check_existence=False, is_for_write=True)
             # Verify mkdir was called with the correct parent directory
             mock_mkdir.assert_called_once()
             mkdir_args, mkdir_kwargs = mock_mkdir.call_args
-            assert str(mkdir_args[0]).endswith(
-                "new_dir/subdir"
-            )  # Check parent directory
+            assert str(mkdir_args[0]).endswith("new_dir/subdir")  # Check parent directory
             assert mkdir_kwargs == {"parents": True, "exist_ok": True}
             mock_read.assert_not_called()
             # Verify write was called with the correct path and content
@@ -306,19 +294,13 @@ class TestWriteFileTool:
 
         try:
             # Mock the filesystem methods
-            mock_validate = mocker.patch.object(
-                fs_context, "validate_path", return_value=file_path_obj
-            )
+            mock_validate = mocker.patch.object(fs_context, "validate_path", return_value=file_path_obj)
             mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
             mock_write = mocker.patch.object(fs_context, "_write_file_async")
-            mock_read = mocker.patch.object(
-                fs_context, "_read_file_async", return_value=existing_content
-            )
+            mock_read = mocker.patch.object(fs_context, "_read_file_async", return_value=existing_content)
 
             # Test append mode
-            args = schemas.WriteFileArgs(
-                path=file_path, content=new_content, mode="append"
-            )
+            args = schemas.WriteFileArgs(path=file_path, content=new_content, mode="append")
 
             # Execute
             result = await tool.write_file(args)
@@ -329,9 +311,7 @@ class TestWriteFileTool:
             assert f"Successfully appended to {file_path}" == result.text
 
             # Verify mocks were called correctly
-            mock_validate.assert_called_once_with(
-                file_path, check_existence=True, is_for_write=True
-            )
+            mock_validate.assert_called_once_with(file_path, check_existence=True, is_for_write=True)
             mock_mkdir.assert_not_called()  # Parent dir exists
             mock_read.assert_called_once()  # Should read existing content
             mock_write.assert_called_once_with(file_path_obj, expected_content)
@@ -353,9 +333,7 @@ class TestWriteFileTool:
         content = "New content"
 
         # Mock the filesystem methods
-        mock_validate = mocker.patch.object(
-            fs_context, "validate_path", return_value=Path(file_path)
-        )
+        mock_validate = mocker.patch.object(fs_context, "validate_path", return_value=Path(file_path))
         mock_mkdir = mocker.patch.object(fs_context, "_mkdir_async")
         mock_write = mocker.patch.object(fs_context, "_write_file_async")
         mock_read = mocker.patch.object(fs_context, "_read_file_async")
@@ -383,14 +361,10 @@ class TestWriteFileTool:
 
             # Verify
             assert isinstance(result, TextContent)
-            assert (
-                f"Successfully wrote to {file_path}" == result.text
-            )  # Should not say 'appended to'
+            assert f"Successfully wrote to {file_path}" == result.text  # Should not say 'appended to'
 
             # Verify mocks were called correctly
-            mock_validate.assert_called_once_with(
-                file_path, check_existence=True, is_for_write=True
-            )
+            mock_validate.assert_called_once_with(file_path, check_existence=True, is_for_write=True)
             mock_mkdir.assert_not_called()  # Parent dir exists
             mock_read.assert_not_called()  # Should not try to read non-existent file
             # Check that _write_file_async was called with the correct path and content
@@ -405,9 +379,7 @@ class TestWriteFileTool:
         fs_context: FilesystemContext,
     ) -> None:
         # Test that an invalid mode raises a ValueError
-        with pytest.raises(
-            ValueError, match="Mode must be either 'overwrite' or 'append'"
-        ):
+        with pytest.raises(ValueError, match="Mode must be either 'overwrite' or 'append'"):
             schemas.WriteFileArgs(path="/test.txt", content="test", mode="invalid")
 
 
@@ -496,18 +468,14 @@ class TestGetFileInfoTool:
         mock_stat.st_gid = 0  # Group ID
 
         # Mock the filesystem methods
-        mocker.patch.object(
-            fs_context, "validate_path", return_value=Path("/test/file.txt")
-        )
+        mocker.patch.object(fs_context, "validate_path", return_value=Path("/test/file.txt"))
 
         # Mock the _get_stat method to return our mock_stat
         async def mock_get_stat(path: Path) -> os.stat_result:
             # Create a proper os.stat_result with the required attributes
             # The order of timestamps in os.stat_result is: st_atime, st_mtime, st_ctime
             # We want created (st_ctime) <= modified (st_mtime) <= accessed (st_atime)
-            stat_result = os.stat_result(
-                (0o100644, 0, 0, 0, 0, 0, 1024, 1672704000, 1672617600, 1672531200)
-            )
+            stat_result = os.stat_result((0o100644, 0, 0, 0, 0, 0, 1024, 1672704000, 1672617600, 1672531200))
             return stat_result
 
         mocker.patch.object(fs_context, "_get_stat", side_effect=mock_get_stat)
@@ -527,7 +495,7 @@ class TestGetFileInfoTool:
 
         # Verify the relative ordering of timestamps is correct
         assert result.created <= result.modified <= result.accessed, (
-            f"Timestamps out of order: created={result.created}, modified={result.modified}, accessed={result.accessed}"
+            f"Timestamps out of order: {result.created} <= {result.modified} <= {result.accessed}"
         )
 
         assert result.isFile is True
@@ -592,12 +560,8 @@ class TestEditFileTool:
         original_content = "Line 1\nLine 2\nLine 3"
 
         # Mock the filesystem methods
-        mock_validate = mocker.patch.object(
-            fs_context, "validate_path", return_value=Path(file_path)
-        )
-        mock_read = mocker.patch.object(
-            fs_context, "_read_file_async", return_value=original_content
-        )
+        mock_validate = mocker.patch.object(fs_context, "validate_path", return_value=Path(file_path))
+        mock_read = mocker.patch.object(fs_context, "_read_file_async", return_value=original_content)
 
         # Replace "Line 2" with "Modified Line 2"
         args = schemas.EditFileArgs(
@@ -613,9 +577,7 @@ class TestEditFileTool:
         assert result.text == f"Successfully edited {file_path}"
 
         # Verify mocks were called correctly
-        mock_validate.assert_called_once_with(
-            file_path, is_for_write=True, check_existence=True
-        )
+        mock_validate.assert_called_once_with(file_path, is_for_write=True, check_existence=True)
         mock_read.assert_called_once_with(Path(file_path))
 
     async def test_edit_file_with_dry_run(
@@ -631,12 +593,8 @@ class TestEditFileTool:
         original_content = "Line 1\nLine 2\nLine 3"
 
         # Mock the filesystem methods
-        mock_validate = mocker.patch.object(
-            fs_context, "validate_path", return_value=Path(file_path)
-        )
-        mock_read = mocker.patch.object(
-            fs_context, "_read_file_async", return_value=original_content
-        )
+        mock_validate = mocker.patch.object(fs_context, "validate_path", return_value=Path(file_path))
+        mock_read = mocker.patch.object(fs_context, "_read_file_async", return_value=original_content)
 
         # Set up the test edit
         args = schemas.EditFileArgs(
@@ -653,7 +611,5 @@ class TestEditFileTool:
         assert "Would edit" in result.text
 
         # Verify mocks were called correctly
-        mock_validate.assert_called_once_with(
-            file_path, is_for_write=True, check_existence=True
-        )
+        mock_validate.assert_called_once_with(file_path, is_for_write=True, check_existence=True)
         mock_read.assert_called_once_with(Path(file_path))

@@ -24,6 +24,7 @@ class BaseTool(ABC):
         """Execute the tool's functionality."""
         pass
 
+    @abstractmethod
     def register_tools(self) -> None:
         """Register tools with the MCP server.
 

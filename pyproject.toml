@@ -3,7 +3,7 @@ name = "mcp-filesystem"
 version = "0.2.0" # Updated version
 description = "A local filesystem interface for Claude via the Model Context Protocol."
 readme = "README.md"
-requires-python = ">=3.10" # Python 3.10+ is good for the features used
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [
   { name = "Daniel Kirschner", email = "dan@sudosynthesis.dev" }
@@ -29,7 +29,6 @@ test = [
   "pytest-xdist>=2.5.0",
   "pytest-timeout>=2.1.0",
   "black",
-  "isort",
   "mypy",
   "ruff",
   "types-aiofiles",
@@ -60,20 +59,11 @@ addopts = "-v --cov=src --cov-report=term-missing --cov-report=xml"
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py312']
 include = '\\.pyi?$'
 
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -109,22 +99,18 @@ exclude = [
   "dist",
   "*.egg-info"
 ]
-# Line length
-line-length = 88
-# Auto-fix mode
-target-version = "py310"
+line-length = 130
+target-version = "py312"
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.ruff.lint]
-# Enable basic rules
-select = [
-  "E",   # pycodestyle errors
-  "F",   # pyflakes
-  "I",   # isort
-]
-extend-ignore = ["E501"]
+select = ["E", "F", "I", "B", "UP"]
+fixable = ["ALL"]
 
-# Enable isort
 [tool.ruff.lint.isort]
-known-first-party = ["filesystem"]
+known-first-party = ["src"]
+force-sort-within-sections = true
 
 [tool.uv]

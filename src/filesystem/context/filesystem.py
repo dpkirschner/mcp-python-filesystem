@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import sys
 from pathlib import Path
+import sys
 
 try:
     import aiofiles
@@ -32,20 +32,15 @@ class FilesystemContext:
         for dir_str in allowed_dirs_str:
             expanded_dir = Path(dir_str).expanduser().resolve()
             if not expanded_dir.is_dir():
-                raise ValueError(
-                    f"Allowed directory does not exist or is not a directory: {expanded_dir}"
-                )
+                raise ValueError(f"Allowed directory does not exist or is not a directory: {expanded_dir}")
             self.allowed_directories.append(expanded_dir)
-        logger.info(
-            f"FSContext initialized. Allowed directories: {[str(p) for p in self.allowed_directories]}"
-        )
+        dirs_formatted = [f"{str(p)[:80]}..." if len(str(p)) > 80 else str(p) for p in self.allowed_directories]
+        logger.info(f"FSContext initialized. Allowed dirs: {', '.join(dirs_formatted)}")
 
     async def _is_path_actually_allowed(self, path_to_check: Path) -> bool:
         """Checks if a fully resolved path is within any allowed directory."""
         for allowed_dir in self.allowed_directories:
-            if path_to_check == allowed_dir or path_to_check.is_relative_to(
-                allowed_dir
-            ):
+            if path_to_check == allowed_dir or path_to_check.is_relative_to(allowed_dir):
                 return True
         return False
 
@@ -67,26 +62,24 @@ class FilesystemContext:
                         resolved = current.resolve(strict=True)
                         if await self._is_path_actually_allowed(resolved):
                             # Found an existing parent that's allowed, construct the full path
-                            final_resolved_path = (
-                                resolved / p_user.relative_to(current)
-                            ).resolve()
+                            final_resolved_path = (resolved / p_user.relative_to(current)).resolve()
                             return final_resolved_path
                         else:
                             raise McpError(
                                 ErrorData(
                                     code=INVALID_PARAMS,
-                                    message=f"Access denied: Path '{requested_path_str}' would be outside allowed areas.",
+                                    message=f"Access denied: '{requested_path_str}' outside allowed dirs.",
                                 )
                             )
-                    except FileNotFoundError:
+                    except FileNotFoundError as e:
                         if current.parent == current:
                             # Reached root and still didn't find an existing allowed directory
                             raise McpError(
                                 ErrorData(
                                     code=INVALID_PARAMS,
-                                    message=f"Cannot determine if path is allowed: no existing parent directory found in allowed areas for '{requested_path_str}'",
+                                    message=f"No allowed parent for '{requested_path_str}'",
                                 )
-                            )
+                            ) from e
                         current = current.parent
             else:
                 # For read operations or when we need to check existence
@@ -103,13 +96,13 @@ class FilesystemContext:
 
                 return final_resolved_path
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise McpError(
                 ErrorData(
                     code=INVALID_PARAMS,
                     message=f"Path does not exist: {requested_path_str}",
                 )
-            )
+            ) from e
 
         except Exception as e:
             logger.warning(f"Error resolving path '{requested_path_str}': {e}")
@@ -118,7 +111,7 @@ class FilesystemContext:
                     code=INVALID_PARAMS,
                     message=f"Access denied or invalid path: '{requested_path_str}': {str(e)}",
                 )
-            )
+            ) from e
 
     async def _read_file_async(
         self,
@@ -138,8 +131,8 @@ class FilesystemContext:
                     content = f.read()
                 try:
                     return content.decode(encoding)
-                except UnicodeDecodeError:
-                    # If decoding fails, return a string representation of the bytes
+                except UnicodeDecodeError as e:
+                    logger.warning("Decoding failed: %s", e)
                     return str(content)
         else:
             async with aiofiles.open(path, "rb") as f:
@@ -151,8 +144,8 @@ class FilesystemContext:
                     content = await f.read()
                 try:
                     return content.decode(encoding)
-                except UnicodeDecodeError:
-                    # If decoding fails, return a string representation of the bytes
+                except UnicodeDecodeError as e:
+                    logger.warning("Decoding failed: %s", e)
                     return str(content)
 
     async def _write_file_async(self, path: Path, content: str) -> int | None:
@@ -162,9 +155,7 @@ class FilesystemContext:
             await f.write(content)
             return None
 
-    async def _mkdir_async(
-        self, path: Path, parents: bool = False, exist_ok: bool = False
-    ) -> None:
+    async def _mkdir_async(self, path: Path, parents: bool = False, exist_ok: bool = False) -> None:
         await asyncio.to_thread(path.mkdir, parents=parents, exist_ok=exist_ok)
 
     async def _rename_async(self, source: Path, destination: Path) -> None:
@@ -184,6 +175,6 @@ class FilesystemContext:
         """
         try:
             return await asyncio.to_thread(path.stat)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             logger.warning(f"File not found: {path}")
-            raise
+            raise FileNotFoundError(f"File not found: {path}") from e

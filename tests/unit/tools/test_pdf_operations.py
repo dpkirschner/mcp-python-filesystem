@@ -1,10 +1,10 @@
 from pathlib import Path
 
 import fitz  # type: ignore # PyMuPDF
-import pytest
-import pytest_mock
 from mcp import McpError
 from mcp.server.fastmcp import FastMCP
+import pytest
+import pytest_mock
 
 from filesystem.context.filesystem import FilesystemContext
 from filesystem.models import schemas

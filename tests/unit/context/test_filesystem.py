@@ -1,14 +1,12 @@
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from mcp.shared.exceptions import McpError
+import pytest
 
 
 class TestFilesystemContext:
-    async def test_validate_path_within_allowed(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_validate_path_within_allowed(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         # Create a file in the temp dir
         test_file = temp_dir / "test.txt"
         test_file.write_text("test")
@@ -17,9 +15,7 @@ class TestFilesystemContext:
         result = await fs_context.validate_path(str(test_file))
         assert result == test_file.resolve()
 
-    async def test_validate_path_outside_allowed(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_validate_path_outside_allowed(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         # Create a directory outside the allowed paths
         outside_dir = Path("/tmp/outside_allowed")
         outside_dir.mkdir(exist_ok=True)
@@ -35,27 +31,19 @@ class TestFilesystemContext:
                 test_file.unlink()
             outside_dir.rmdir()
 
-    async def test_validate_nonexistent_file(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_validate_nonexistent_file(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         with pytest.raises(McpError) as exc_info:
             await fs_context.validate_path(str(temp_dir / "nonexistent.txt"))
         assert "does not exist" in str(exc_info.value)
 
-    async def test_validate_path_for_nonexistent_but_creatable(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_validate_path_for_nonexistent_but_creatable(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         new_file = temp_dir / "new_dir" / "new_file.txt"
 
         # Should not raise for a non-existent but creatable path
-        result = await fs_context.validate_path(
-            str(new_file), check_existence=False, is_for_write=True
-        )
+        result = await fs_context.validate_path(str(new_file), check_existence=False, is_for_write=True)
         assert result == new_file.resolve()
 
-    async def test_read_write_file_async(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_read_write_file_async(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         test_file = temp_dir / "test_rw.txt"
         test_content = "Test content"
 
@@ -95,9 +83,7 @@ class TestFilesystemContext:
         assert dest.exists()
         assert dest.read_text() == "test"
 
-    async def test_path_validation_outside_allowed_directory(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_path_validation_outside_allowed_directory(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         """Test that paths outside allowed directories are rejected."""
         # Create a file in a directory that's not in the allowed paths
         outside_dir = Path("/tmp/not_allowed_dir")
@@ -108,58 +94,48 @@ class TestFilesystemContext:
         try:
             with pytest.raises(McpError) as exc_info:
                 await fs_context.validate_path(str(test_file), check_existence=True)
-            assert "Access denied" in str(exc_info.value)
-            assert "outside allowed areas" in str(exc_info.value)
+            error_msg = str(exc_info.value)
+            assert error_msg.startswith("Access denied or invalid path")
+            assert "Access denied: Path" in error_msg
+            assert "is outside allowed areas" in error_msg
         finally:
             test_file.unlink()
             outside_dir.rmdir()
 
-    async def test_validate_path_for_write_with_nonexistent_parents(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_validate_path_for_write_with_nonexistent_parents(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         """Test path validation for write operations with non-existent parent directories."""
         new_file = temp_dir / "new_dir" / "subdir" / "new_file.txt"
 
         # Should not raise and should return the resolved path
-        result = await fs_context.validate_path(
-            str(new_file), check_existence=False, is_for_write=True
-        )
+        result = await fs_context.validate_path(str(new_file), check_existence=False, is_for_write=True)
         assert result == new_file.resolve()
 
-    async def test_validate_path_for_write_outside_allowed(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_validate_path_for_write_outside_allowed(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         """Test that write operations outside allowed directories are rejected."""
         # Try to create a file in a directory that's not in the allowed paths
         outside_dir = Path("/tmp/not_allowed_dir")
         new_file = outside_dir / "new_file.txt"
 
         with pytest.raises(McpError) as exc_info:
-            await fs_context.validate_path(
-                str(new_file), check_existence=False, is_for_write=True
-            )
-        assert "Access denied" in str(exc_info.value)
-        assert "outside allowed areas" in str(exc_info.value)
+            await fs_context.validate_path(str(new_file), check_existence=False, is_for_write=True)
+        error_msg = str(exc_info.value)
+        assert error_msg.startswith("Access denied or invalid path")
+        assert "Access denied:" in error_msg
+        assert "outside allowed dirs" in error_msg
 
-    async def test_read_file_async_with_offset_and_length(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_read_file_async_with_offset_and_length(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         """Test reading file with offset and length parameters."""
         test_file = temp_dir / "test_offset.txt"
         test_content = "Hello, this is a test file"
         test_file.write_text(test_content)
 
         # Read with offset and length
-        content = await fs_context._read_file_async(
-            test_file, offset=7, length=4, encoding="utf-8"
-        )
+        content = await fs_context._read_file_async(test_file, offset=7, length=4, encoding="utf-8")
         assert content == "this"
 
     @pytest.mark.parametrize("has_aiofiles", [True, False])
-    async def test_read_file_async_fallback(
-        self, fs_context: AsyncMock, temp_dir: Path, has_aiofiles: bool
-    ) -> None:
-        """Test that read_file_async falls back to sync operations when aiofiles is not available."""
+    async def test_read_file_async_fallback(self, fs_context: AsyncMock, temp_dir: Path, has_aiofiles: bool) -> None:
+        """Test read_file_async falls back to sync operations when aiofiles is not available."""
         test_file = temp_dir / "test_fallback.txt"
         test_content = "Testing fallback mechanism"
         test_file.write_text(test_content)
@@ -168,10 +144,8 @@ class TestFilesystemContext:
             content = await fs_context._read_file_async(test_file)
             assert content == test_content
 
-    async def test_write_file_async_fallback(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
-        """Test that write_file_async falls back to sync operations when aiofiles is not available."""
+    async def test_write_file_async_fallback(self, fs_context: AsyncMock, temp_dir: Path) -> None:
+        """Test write_file_async falls back to sync operations when aiofiles is not available."""
         test_file = temp_dir / "test_write_fallback.txt"
         test_content = "Testing write fallback"
 
@@ -179,9 +153,7 @@ class TestFilesystemContext:
             await fs_context._write_file_async(test_file, test_content)
             assert test_file.read_text() == test_content
 
-    async def test_get_stat_success(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_get_stat_success(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         """Test successful stat retrieval."""
         test_file = temp_dir / "stat_test.txt"
         test_file.write_text("test")
@@ -190,9 +162,7 @@ class TestFilesystemContext:
         assert stat_result is not None
         assert stat_result.st_size == 4  # Length of "test"
 
-    async def test_get_stat_not_found(
-        self, fs_context: AsyncMock, temp_dir: Path
-    ) -> None:
+    async def test_get_stat_not_found(self, fs_context: AsyncMock, temp_dir: Path) -> None:
         """Test stat retrieval for non-existent file raises FileNotFoundError."""
         non_existent = temp_dir / "nonexistent.txt"
 

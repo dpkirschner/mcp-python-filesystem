@@ -1,11 +1,11 @@
 import asyncio
-import shutil
-import tempfile
 from collections.abc import Iterator
 from pathlib import Path
+import shutil
+import tempfile
 
-import pytest
 from mcp.server.fastmcp import FastMCP
+import pytest
 
 from filesystem.context.filesystem import FilesystemContext
 

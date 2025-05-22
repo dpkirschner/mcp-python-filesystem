@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
-import pytest
 from mcp import McpError
 from mcp.server.fastmcp import FastMCP
+import pytest
 from pytest_mock import MockerFixture
 
 from filesystem.context.filesystem import FilesystemContext
@@ -124,9 +124,7 @@ class TestListDirectoryTool:
                     raise PermissionError("Permission denied for bad_file")
 
             # Default case: call the original function
-            return await original_asyncio_to_thread(
-                func_to_run_in_thread, *args_for_func, **kwargs_for_func
-            )
+            return await original_asyncio_to_thread(func_to_run_in_thread, *args_for_func, **kwargs_for_func)
 
         # Patch asyncio.to_thread with our revised side_effect
         mocker.patch("asyncio.to_thread", side_effect=to_thread_side_effect)
@@ -200,9 +198,7 @@ class TestListDirectoryTool:
         assert ".hidden_dir" not in names
 
         # Test with show_hidden=True
-        args_show_hidden = schemas.ListDirectoryArgs(
-            path=str(test_dir), show_hidden=True
-        )
+        args_show_hidden = schemas.ListDirectoryArgs(path=str(test_dir), show_hidden=True)
 
         # Execute with show_hidden=True
         result_hidden = await tool.list_directory(args_show_hidden)
@@ -264,16 +260,12 @@ class TestListDirectoryTool:
 
         # Test with show_hidden and pattern
         (test_dir / ".hidden.txt").write_text("Hidden text file")
-        args_hidden = schemas.ListDirectoryArgs(
-            path=str(test_dir), pattern="*.txt", show_hidden=True
-        )
+        args_hidden = schemas.ListDirectoryArgs(path=str(test_dir), pattern="*.txt", show_hidden=True)
         result_hidden = await tool.list_directory(args_hidden)
         assert len(result_hidden) == 4  # 3 txt files + 1 hidden txt file
 
         # Test with a pattern that matches no files
-        args_none = schemas.ListDirectoryArgs(
-            path=str(test_dir), pattern="*.nonexistent"
-        )
+        args_none = schemas.ListDirectoryArgs(path=str(test_dir), pattern="*.nonexistent")
         result_none = await tool.list_directory(args_none)
         assert len(result_none) == 0
 
@@ -290,9 +282,7 @@ class TestListDirectoryTool:
         registered_function = None
 
         # Create a function that will be used as the decorator
-        def mock_decorator(
-            *args: Any, **kwargs: Any
-        ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def mock_decorator(*args: Any, **kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
             def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
                 nonlocal registered_function
                 registered_function = func

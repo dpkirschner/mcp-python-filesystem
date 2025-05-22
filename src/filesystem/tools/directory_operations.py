@@ -1,6 +1,6 @@
 import asyncio
-import logging
 from datetime import datetime
+import logging
 
 from .. import models
 from ..decorators import flat_args
@@ -12,9 +12,7 @@ logger = logging.getLogger(__name__)
 class ListDirectoryTool(base.BaseTool):
     """Tool for listing directory contents."""
 
-    async def execute(
-        self, args: models.ListDirectoryArgs
-    ) -> list[models.DirectoryEntryItem]:
+    async def execute(self, args: models.ListDirectoryArgs) -> list[models.DirectoryEntryItem]:
         """Execute the directory listing operation.
 
         Args:
@@ -26,9 +24,7 @@ class ListDirectoryTool(base.BaseTool):
         return await self.list_directory(args)
 
     @flat_args(models.ListDirectoryArgs)
-    async def list_directory(
-        self, args: models.ListDirectoryArgs
-    ) -> list[models.DirectoryEntryItem]:
+    async def list_directory(self, args: models.ListDirectoryArgs) -> list[models.DirectoryEntryItem]:
         """List the contents of a directory.
 
         Args:
@@ -42,9 +38,7 @@ class ListDirectoryTool(base.BaseTool):
             McpError: If the directory does not exist or is not accessible.
         """
         # First validate the path is allowed
-        valid_path = await self.fs_context.validate_path(
-            args.path, check_existence=True
-        )
+        valid_path = await self.fs_context.validate_path(args.path, check_existence=True)
 
         # Then check if it's actually a directory
         stat = await asyncio.to_thread(valid_path.stat)
@@ -60,21 +54,15 @@ class ListDirectoryTool(base.BaseTool):
                     continue
 
                 # Skip if pattern is provided and doesn't match
-                if args.pattern is not None and not item.name.lower().endswith(
-                    args.pattern.lower().lstrip("*")
-                ):
+                if args.pattern is not None and not item.name.lower().endswith(args.pattern.lower().lstrip("*")):
                     continue
 
                 try:
                     item_path = valid_path / item.name
                     stat = await asyncio.to_thread(item_path.stat)
 
-                    is_directory = bool(
-                        stat.st_mode & 0o040000
-                    )  # Check if it's a directory using st_mode
-                    modified_timestamp = (
-                        datetime.fromtimestamp(stat.st_mtime) if stat.st_mtime else None
-                    )
+                    is_directory = bool(stat.st_mode & 0o040000)  # Check if it's a directory using st_mode
+                    modified_timestamp = datetime.fromtimestamp(stat.st_mtime) if stat.st_mtime else None
                     entry = models.DirectoryEntryItem(
                         name=item.name,
                         type="directory" if is_directory else "file",
@@ -85,11 +73,7 @@ class ListDirectoryTool(base.BaseTool):
                 except Exception as e:
                     logger.warning(f"Error getting info for {item.name}: {str(e)}")
                     # Still add the entry with minimal info
-                    entries.append(
-                        models.DirectoryEntryItem(
-                            name=item.name, type="unknown", error=str(e)
-                        )
-                    )
+                    entries.append(models.DirectoryEntryItem(name=item.name, type="unknown", error=str(e)))
         except Exception as e:
             logger.error(f"Error listing directory {args.path}: {str(e)}")
             raise

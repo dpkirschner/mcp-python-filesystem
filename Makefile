@@ -12,7 +12,7 @@ help:
 	@echo "  make test-cov         - Run tests with coverage report"
 	@echo "  make lint             - Run code linters (ruff, mypy)"
 	@echo "  make type-check       - Run type checking with mypy"
-	@echo "  make format           - Format code with Ruff, Black, and isort"
+	@echo "  make format           - Format code with Ruff and Black"
 	@echo "  make check-format     - Check code formatting without making changes"
 	@echo "  make check-security   - Run security checks (safety, bandit)"
 	@echo "  make check-updates    - Check for outdated dependencies"
@@ -62,8 +62,6 @@ format:
 	@ruff format src/ tests/
 	@echo "Running Ruff with --fix..."
 	@ruff check src/ tests/ --fix
-	@echo "Running isort..."
-	@isort src/ tests/
 	@echo "Running Black..."
 	@black src/ tests/
 
@@ -73,8 +71,6 @@ check-format:
 	@ruff format --check src/ tests/
 	@echo "Checking Black formatting..."
 	@black --check src/ tests/
-	@echo "Checking isort formatting..."
-	@isort --check-only src/ tests/
 
 # Run security checks
 check-security:
@@ -114,8 +110,4 @@ clean:
 # Run all checks (format check, lint, test)
 check: check-format lint test
 
-# Run all checks with auto-formatting
-# 1. First formats the code
-# 2. Verifies formatting is correct
-# 3. Runs lint and tests
 all: format check-format lint test

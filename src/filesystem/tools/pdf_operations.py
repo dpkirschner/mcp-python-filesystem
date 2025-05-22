@@ -43,17 +43,13 @@ class ReadPDFFileTool(base.BaseTool):
             ValueError: If any page number is out of range.
         """
         try:
-            resolved_path = await self.fs_context.validate_path(
-                args.path, check_existence=True
-            )
+            resolved_path = await self.fs_context.validate_path(args.path, check_existence=True)
             result = await asyncio.get_running_loop().run_in_executor(
                 None, self._process_pdf_sync, str(resolved_path), args.page_numbers
             )
 
             if not isinstance(result, tuple) or len(result) != 3:
-                raise RuntimeError(
-                    f"Unexpected result format from PDF processing: {result}"
-                )
+                raise RuntimeError(f"Unexpected result format from PDF processing: {result}")
 
             file_path, total_pages, pages = result
             return PdfContent(path=file_path, total_pages=total_pages, pages=pages)
@@ -65,13 +61,9 @@ class ReadPDFFileTool(base.BaseTool):
         except ValueError as e:
             raise ValueError(f"Invalid page numbers: {str(e)}") from e
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to process PDF file {args.path}: {str(e)}"
-            ) from e
+            raise RuntimeError(f"Failed to process PDF file {args.path}: {str(e)}") from e
 
-    def _process_pdf_sync(
-        self, file_path: str, page_numbers: list[int] | None = None
-    ) -> tuple[str, int, list[PdfPage]]:
+    def _process_pdf_sync(self, file_path: str, page_numbers: list[int] | None = None) -> tuple[str, int, list[PdfPage]]:
         """Synchronously process a PDF file and extract text from specified pages.
 
         Args:
@@ -93,10 +85,7 @@ class ReadPDFFileTool(base.BaseTool):
             if page_numbers is not None:
                 invalid_pages = [p for p in page_numbers if p < 1 or p > total_pages]
                 if invalid_pages:
-                    raise ValueError(
-                        f"Invalid page numbers: {invalid_pages}. "
-                        f"Valid range is 1-{total_pages}."
-                    )
+                    raise ValueError(f"Invalid page numbers: {invalid_pages}. Valid range is 1-{total_pages}.")
                 pages_to_read = page_numbers
             else:
                 pages_to_read = list(range(1, total_pages + 1))

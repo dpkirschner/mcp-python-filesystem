@@ -8,9 +8,7 @@ from mcp.server.fastmcp import FastMCP
 from ..context import context
 from ..tools import directory_operations, file_operations, pdf_operations
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -44,17 +42,13 @@ async def run_server_logic(allowed_dirs_str: list[str], verbose: bool) -> None:
     pdf_operations.ReadPDFFileTool(mcp, fs_context)
     logger.info("PDF support enabled")
 
-    logger.info(
-        f"Starting Python MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}"
-    )
+    logger.info(f"Starting MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}")
     await mcp.run_stdio_async()
     logger.info("Python MCP Filesystem Server stopped.")
 
 
 def main_cli() -> None:
-    parser = argparse.ArgumentParser(
-        description="Python MCP Filesystem Server (FastMCP)"
-    )
+    parser = argparse.ArgumentParser(description="Python MCP Filesystem Server (FastMCP)")
     parser.add_argument(
         "allowed_directory",
         nargs="+",

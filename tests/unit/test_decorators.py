@@ -1,7 +1,7 @@
 from inspect import Parameter, signature
 
-import pytest
 from pydantic import Field, ValidationError
+import pytest
 
 from filesystem.decorators import flat_args
 from filesystem.models.base import BaseModel
@@ -82,10 +82,7 @@ class TestFlatArgsDecorator:
             model = SimpleModel.model_validate({"name": "Dave"})
             await simple_func_deco(model)
         # Pydantic v2 error messages are more structured. Let's check for field name and type.
-        assert any(
-            err["type"] == "missing" and "age" in err["loc"]
-            for err in excinfo.value.errors()
-        )
+        assert any(err["type"] == "missing" and "age" in err["loc"] for err in excinfo.value.errors())
 
     async def test_kw_args_validation_error_on_wrong_type(self) -> None:
         """Test ValidationError with incorrect type for model fields."""
@@ -93,17 +90,12 @@ class TestFlatArgsDecorator:
             # 'age' should be int, not str
             model = SimpleModel.model_validate({"name": "Eve", "age": "thirty"})
             await simple_func_deco(model)
-        assert any(
-            err["type"] == "int_parsing" and "age" in err["loc"]
-            for err in excinfo.value.errors()
-        )
+        assert any(err["type"] == "int_parsing" and "age" in err["loc"] for err in excinfo.value.errors())
 
     async def test_kw_args_field_validator_respected(self) -> None:
         """Test that Pydantic field validators are respected with model fields."""
         # Test with buffer_size set to a valid value
-        model = FileOperationModel.model_validate(
-            {"path": "/file.txt", "buffer_size": 8192}
-        )
+        model = FileOperationModel.model_validate({"path": "/file.txt", "buffer_size": 8192})
         result = await file_op_deco(model)
         assert result["path"] == "/file.txt"
         assert result["buffer_size"] == 8192
@@ -112,9 +104,7 @@ class TestFlatArgsDecorator:
         assert result["optional_field"] is None  # Check default optional
 
         # Set optional field
-        model_optional = FileOperationModel.model_validate(
-            {"path": "/file.txt", "optional_field": "test_value"}
-        )
+        model_optional = FileOperationModel.model_validate({"path": "/file.txt", "optional_field": "test_value"})
         result_optional = await file_op_deco(model_optional)
         assert result_optional["optional_field"] == "test_value"
 
@@ -127,10 +117,7 @@ class TestFlatArgsDecorator:
                 }
             )
             await file_op_deco(invalid_model)
-        assert any(
-            err["type"] == "greater_than" and "buffer_size" in err["loc"]
-            for err in excinfo.value.errors()
-        )
+        assert any(err["type"] == "greater_than" and "buffer_size" in err["loc"] for err in excinfo.value.errors())
 
     async def test_kw_args_nested_model_handling(self) -> None:
         """Test nested Pydantic models with model validation."""
@@ -159,10 +146,7 @@ class TestFlatArgsDecorator:
                 }
             )
             await nested_func_deco(invalid_nested)
-        assert any(
-            err["type"] == "missing" and "age" in err["loc"]
-            for err in excinfo.value.errors()
-        )
+        assert any(err["type"] == "missing" and "age" in err["loc"] for err in excinfo.value.errors())
 
     # --- Tests for Flattened Positional Arguments ---
     async def test_pos_args_non_method_current_decorator_behavior(self) -> None:
@@ -178,10 +162,7 @@ class TestFlatArgsDecorator:
         # Test with incorrect type for age (should be int)
         with pytest.raises(ValidationError) as excinfo:
             await simple_func_deco("Bob", "not_an_int")
-        assert any(
-            err["type"] == "int_parsing" and err["loc"] == ("age",)
-            for err in excinfo.value.errors()
-        )
+        assert any(err["type"] == "int_parsing" and err["loc"] == ("age",) for err in excinfo.value.errors())
 
     async def test_pos_args_method_correct_handling(self) -> None:
         """Test calling a method with positional arguments (after self)."""
@@ -204,10 +185,7 @@ class TestFlatArgsDecorator:
         with pytest.raises(ValidationError) as excinfo:
             # Missing 'age' (only 'name' provided positionally)
             await instance.my_method("CarolMethodOnlyName")
-        assert any(
-            err["type"] == "missing" and err["loc"] == ("age",)
-            for err in excinfo.value.errors()
-        )
+        assert any(err["type"] == "missing" and err["loc"] == ("age",) for err in excinfo.value.errors())
 
     # --- Tests for Method Usage (Decorator on Instance Methods) ---
     async def test_method_called_with_kw_args(self) -> None:
@@ -219,9 +197,7 @@ class TestFlatArgsDecorator:
                 return model.model_dump()
 
         obj = TestClassMethodKw()
-        result = await obj.method_with_kw(
-            name="method_kw_test", age=42, is_active=False
-        )
+        result = await obj.method_with_kw(name="method_kw_test", age=42, is_active=False)
         assert result == {"name": "method_kw_test", "age": 42, "is_active": False}
 
     async def test_method_passthrough_mode(self) -> None:
@@ -302,9 +278,7 @@ class TestFlatArgsDecorator:
             expected_default,
         ) in expected_method_params.items():
             param = params_method[param_name]
-            if (
-                param_name in expected_params
-            ):  # Only check annotation for model fields, not 'self'
+            if param_name in expected_params:  # Only check annotation for model fields, not 'self'
                 assert param.annotation == expected_anno
             assert param.default == expected_default
 
@@ -330,20 +304,14 @@ class TestFlatArgsDecorator:
             return args.model_dump()
 
         # Successful call
-        result = await write_file_actual_deco(
-            path="/out.txt", content="hello world", mode="overwrite"
-        )
+        result = await write_file_actual_deco(path="/out.txt", content="hello world", mode="overwrite")
         assert result["path"] == "/out.txt"
         assert result["content"] == "hello world"
         assert result["mode"] == "overwrite"
 
         # The model raises a ValueError directly in __init__ for invalid mode
-        with pytest.raises(
-            ValueError, match="Mode must be either 'overwrite' or 'append'"
-        ):
-            await write_file_actual_deco(
-                path="/test.txt", content="test", mode="invalid_mode"
-            )
+        with pytest.raises(ValueError, match="Mode must be either 'overwrite' or 'append'"):
+            await write_file_actual_deco(path="/test.txt", content="test", mode="invalid_mode")
 
     async def test_actual_schema_searchfileargs_flattened_with_defaults(self) -> None:
         """Test SearchFilesArgs with flattened calls using default values."""

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import pytest
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
+import pytest
 
 from filesystem.context.filesystem import FilesystemContext
 from filesystem.models import schemas
@@ -13,9 +13,7 @@ class TestReadFileToolIntegration:
     """Integration tests for ReadFileTool with actual filesystem operations."""
 
     @pytest.mark.asyncio
-    async def test_read_file_integration(
-        self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path
-    ) -> None:
+    async def test_read_file_integration(self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path) -> None:
         # Setup - create a test file
         test_file = temp_dir / "test_read.txt"
         test_content = "This is a test file for integration testing"
@@ -53,9 +51,7 @@ class TestReadMultipleFilesToolIntegration:
 
         # Initialize the tool
         tool = file_operations.ReadMultipleFilesTool(mcp_server, fs_context)
-        args = schemas.ReadMultipleFilesArgs(
-            paths=[str(file1), str(file2), non_existent_file]
-        )
+        args = schemas.ReadMultipleFilesArgs(paths=[str(file1), str(file2), non_existent_file])
 
         # Execute
         results = await tool.read_multiple_files(args)
@@ -83,9 +79,7 @@ class TestWriteFileToolIntegration:
     """Integration tests for WriteFileTool with actual filesystem operations."""
 
     @pytest.mark.asyncio
-    async def test_write_file_integration(
-        self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path
-    ) -> None:
+    async def test_write_file_integration(self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path) -> None:
         # Setup
         tool = file_operations.WriteFileTool(mcp_server, fs_context)
         file_path = str(temp_dir / "new_file.txt")
@@ -135,9 +129,7 @@ class TestEditFileToolIntegration:
     """Integration tests for EditFileTool with actual filesystem operations."""
 
     @pytest.mark.asyncio
-    async def test_edit_file_integration(
-        self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path
-    ) -> None:
+    async def test_edit_file_integration(self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path) -> None:
         # Setup - create a test file
         test_file = temp_dir / "test_edit.txt"
         original_content = "Line 1\nLine 2\nLine 3"
@@ -169,9 +161,7 @@ class TestEditFileToolIntegration:
         assert "Line 1" in modified_content  # This line should remain unchanged
 
     @pytest.mark.asyncio
-    async def test_edit_file_dry_run(
-        self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path
-    ) -> None:
+    async def test_edit_file_dry_run(self, mcp_server: FastMCP, fs_context: FilesystemContext, temp_dir: Path) -> None:
         # Setup - create a test file
         test_file = temp_dir / "test_dry_run.txt"
         original_content = "Original content"
