@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import List
 
 from .. import models
 from ..decorators import flat_args
@@ -15,7 +14,7 @@ class ListDirectoryTool(base.BaseTool):
 
     async def execute(
         self, args: models.ListDirectoryArgs
-    ) -> List[models.DirectoryEntryItem]:
+    ) -> list[models.DirectoryEntryItem]:
         """Execute the directory listing operation.
 
         Args:
@@ -29,7 +28,7 @@ class ListDirectoryTool(base.BaseTool):
     @flat_args(models.ListDirectoryArgs)
     async def list_directory(
         self, args: models.ListDirectoryArgs
-    ) -> List[models.DirectoryEntryItem]:
+    ) -> list[models.DirectoryEntryItem]:
         """List the contents of a directory.
 
         Args:
@@ -102,5 +101,5 @@ class ListDirectoryTool(base.BaseTool):
         @self.mcp_instance.tool()
         async def list_directory_tool(
             args: models.ListDirectoryArgs,
-        ) -> List[models.DirectoryEntryItem]:
+        ) -> list[models.DirectoryEntryItem]:
             return await self.list_directory(args)

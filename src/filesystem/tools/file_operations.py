@@ -2,7 +2,6 @@ import asyncio
 import logging
 import mimetypes
 from datetime import datetime
-from typing import List
 
 from mcp.types import TextContent
 
@@ -52,9 +51,12 @@ class GetFileInfoTool(base.BaseTool):
             args: The arguments for getting file info, including the file path.
 
         Returns:
-            FileInfo: Information about the file including size, timestamps, and MIME type.
+            FileInfo: Information about the file.
         """
-        return await self.get_file_info(args)
+        result = await self.get_file_info(args)
+        if not isinstance(result, models.FileInfo):
+            raise TypeError(f"Expected FileInfo but got {type(result).__name__}")
+        return result
 
     @flat_args(models.GetFileInfoArgs)
     async def get_file_info(self, args: models.GetFileInfoArgs) -> models.FileInfo:
@@ -110,21 +112,21 @@ class ReadMultipleFilesTool(base.BaseTool):
 
     async def execute(
         self, args: models.ReadMultipleFilesArgs
-    ) -> List[models.FileContentResult]:
+    ) -> list[models.FileContentResult]:
         """Execute the multiple files read operation.
 
         Args:
             args: The arguments for reading multiple files, including the list of file paths.
 
         Returns:
-            List[FileContentResult]: A list of results for each file read operation.
+            List[FileContentResult]: A list of file content results, one for each file.
         """
         return await self.read_multiple_files(args)
 
     @flat_args(models.ReadMultipleFilesArgs)
     async def read_multiple_files(
         self, args: models.ReadMultipleFilesArgs
-    ) -> List[models.FileContentResult]:
+    ) -> list[models.FileContentResult]:
         """Read multiple files and return their contents.
 
         Args:
@@ -133,19 +135,16 @@ class ReadMultipleFilesTool(base.BaseTool):
         Returns:
             List[FileContentResult]: A list of file content results, one for each file.
         """
-        results: List[models.FileContentResult] = []
-        for file_path_str in args.paths:
+        results: list[models.FileContentResult] = []
+        for path in args.paths:
             try:
-                valid_path = await self.fs_context.validate_path(file_path_str)
+                valid_path = await self.fs_context.validate_path(path)
                 content = await self.fs_context._read_file_async(valid_path)
-                result = models.FileContentResult(
-                    path=file_path_str, content=content, error=None
-                )
+                results.append(models.FileContentResult(path=path, content=content))
             except Exception as e:
-                result = models.FileContentResult(
-                    path=file_path_str, content=None, error=str(e)
+                results.append(
+                    models.FileContentResult(path=path, content=None, error=str(e))
                 )
-            results.append(result)
         return results
 
     # Register the tool with the MCP server
@@ -153,7 +152,7 @@ class ReadMultipleFilesTool(base.BaseTool):
         @self.mcp_instance.tool()
         async def read_multiple_files_tool(
             args: models.ReadMultipleFilesArgs,
-        ) -> List[models.FileContentResult]:
+        ) -> list[models.FileContentResult]:
             return await self.read_multiple_files(args)
 
 

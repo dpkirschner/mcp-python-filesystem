@@ -1,8 +1,8 @@
 import asyncio
 import logging
-from typing import List, Tuple
 
 import fitz  # type: ignore # PyMuPDF
+from mcp import McpError
 
 from .. import flat_args
 from ..models.schemas import PdfContent, PdfPage, ReadPdfFileArgs
@@ -42,25 +42,36 @@ class ReadPDFFileTool(base.BaseTool):
             RuntimeError: If the PDF is corrupted or invalid.
             ValueError: If any page number is out of range.
         """
-
         try:
             resolved_path = await self.fs_context.validate_path(
                 args.path, check_existence=True
             )
-            (
-                file_path,
-                total_pages,
-                pages,
-            ) = await asyncio.get_running_loop().run_in_executor(
+            result = await asyncio.get_running_loop().run_in_executor(
                 None, self._process_pdf_sync, str(resolved_path), args.page_numbers
             )
+
+            if not isinstance(result, tuple) or len(result) != 3:
+                raise RuntimeError(
+                    f"Unexpected result format from PDF processing: {result}"
+                )
+
+            file_path, total_pages, pages = result
             return PdfContent(path=file_path, total_pages=total_pages, pages=pages)
+
+        except McpError:
+            raise
         except fitz.FileDataError as e:
             raise RuntimeError(f"Invalid or corrupted PDF file: {args.path}") from e
+        except ValueError as e:
+            raise ValueError(f"Invalid page numbers: {str(e)}") from e
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to process PDF file {args.path}: {str(e)}"
+            ) from e
 
     def _process_pdf_sync(
-        self, file_path: str, page_numbers: List[int] | None = None
-    ) -> Tuple[str, int, List[PdfPage]]:
+        self, file_path: str, page_numbers: list[int] | None = None
+    ) -> tuple[str, int, list[PdfPage]]:
         """Synchronously process a PDF file and extract text from specified pages.
 
         Args:
@@ -91,7 +102,7 @@ class ReadPDFFileTool(base.BaseTool):
                 pages_to_read = list(range(1, total_pages + 1))
 
             # Extract text from specified pages
-            pdf_pages: List[PdfPage] = []
+            pdf_pages: list[PdfPage] = []
             for page_num in pages_to_read:
                 page = doc[page_num - 1]  # Convert to 0-based index
                 text = page.get_text()
@@ -109,4 +120,5 @@ class ReadPDFFileTool(base.BaseTool):
 
         @self.mcp_instance.tool()
         async def read_pdf_file_tool(args: ReadPdfFileArgs) -> PdfContent:
-            return await self.read_pdf_file(args)
+            result = await self.read_pdf_file(args)
+            return result

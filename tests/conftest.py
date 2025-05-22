@@ -1,8 +1,8 @@
 import asyncio
 import shutil
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator, List
 
 import pytest
 from mcp.server.fastmcp import FastMCP
@@ -19,7 +19,7 @@ def temp_dir() -> Iterator[Path]:
 
 
 @pytest.fixture
-def allowed_dirs(temp_dir: Path) -> List[str]:
+def allowed_dirs(temp_dir: Path) -> list[str]:
     """Create a list of allowed directories for testing."""
     allowed = [str(temp_dir)]
     # Create some test directories
@@ -29,7 +29,7 @@ def allowed_dirs(temp_dir: Path) -> List[str]:
 
 
 @pytest.fixture
-async def fs_context(allowed_dirs: List[str]) -> FilesystemContext:
+async def fs_context(allowed_dirs: list[str]) -> FilesystemContext:
     """Create a FilesystemContext with test directories."""
     return FilesystemContext(allowed_dirs)
 

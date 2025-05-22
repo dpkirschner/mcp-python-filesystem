@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import sys
-from typing import List
 
 from mcp.server.fastmcp import FastMCP
 
@@ -15,7 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def run_server_logic(allowed_dirs_str: List[str], verbose: bool) -> None:
+async def run_server_logic(allowed_dirs_str: list[str], verbose: bool) -> None:
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
         logger.debug("Verbose logging enabled.")

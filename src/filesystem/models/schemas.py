@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import Field
 
@@ -8,12 +7,12 @@ from .base import BaseModel
 
 class ReadFileArgs(BaseModel):
     path: str
-    offset: Optional[int] = Field(
+    offset: int | None = Field(
         default=0,
         ge=0,
         description="The position in the file to start reading from (in bytes).",
     )
-    length: Optional[int] = Field(
+    length: int | None = Field(
         default=None,
         gt=0,
         description="Maximum number of bytes to read. If None, reads to the end of the file.",
@@ -25,7 +24,7 @@ class ReadFileArgs(BaseModel):
 
 
 class ReadMultipleFilesArgs(BaseModel):
-    paths: List[str]
+    paths: list[str]
 
 
 class WriteFileArgs(BaseModel):
@@ -58,7 +57,7 @@ class EditOperation(BaseModel):
 
 class EditFileArgs(BaseModel):
     path: str
-    edits: List[EditOperation]
+    edits: list[EditOperation]
     dryRun: bool = Field(
         default=False, description="Preview changes using git-style diff format"
     )
@@ -74,7 +73,7 @@ class ListDirectoryArgs(BaseModel):
         default=False,
         description="Whether to include hidden files/directories (those starting with '.')",
     )
-    pattern: Optional[str] = Field(
+    pattern: str | None = Field(
         default=None,
         description="Optional glob pattern to filter directory entries by name (e.g., '*.txt' for .txt files)",
     )
@@ -92,7 +91,7 @@ class MoveFileArgs(BaseModel):
 class SearchFilesArgs(BaseModel):
     path: str
     pattern: str
-    excludePatterns: Optional[List[str]] = Field(default_factory=lambda: [])
+    excludePatterns: list[str] | None = Field(default_factory=lambda: [])
 
 
 class GetFileInfoArgs(BaseModel):
@@ -114,7 +113,7 @@ class FileInfo(BaseModel):
 class TreeEntry(BaseModel):
     name: str
     type: str  # "file" or "directory"
-    children: Optional[List["TreeEntry"]] = None
+    children: list["TreeEntry"] | None = None
 
 
 TreeEntry.model_rebuild()
@@ -123,20 +122,20 @@ TreeEntry.model_rebuild()
 class DirectoryEntryItem(BaseModel):
     name: str
     type: str  # "file" or "directory"
-    size: Optional[int] = None
-    modified_timestamp: Optional[datetime] = None
-    error: Optional[str] = None
+    size: int | None = None
+    modified_timestamp: datetime | None = None
+    error: str | None = None
 
 
 class FileContentResult(BaseModel):
     path: str
-    content: Optional[str] = None
-    error: Optional[str] = None
+    content: str | None = None
+    error: str | None = None
 
 
 class ReadPdfFileArgs(BaseModel):
     path: str = Field(..., description="The path to the PDF file to read.")
-    page_numbers: Optional[List[int]] = Field(
+    page_numbers: list[int] | None = Field(
         default=None,
         description="Specific page numbers to extract text from. If None, extracts from all pages.",
     )
@@ -152,4 +151,4 @@ class PdfContent(BaseModel):
 
     path: str = Field(..., description="Path to the PDF file")
     total_pages: int = Field(..., description="Total number of pages in the PDF")
-    pages: List[PdfPage] = Field(..., description="List of pages with extracted text")
+    pages: list[PdfPage] = Field(..., description="List of pages with extracted text")

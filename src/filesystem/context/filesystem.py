@@ -5,7 +5,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 try:
     import aiofiles
@@ -25,11 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 class FilesystemContext:
-    def __init__(self, allowed_dirs_str: List[str]):
+    def __init__(self, allowed_dirs_str: list[str]):
         if not allowed_dirs_str:
             raise ValueError("At least one allowed directory must be specified.")
 
-        self.allowed_directories: List[Path] = []
+        self.allowed_directories: list[Path] = []
         for dir_str in allowed_dirs_str:
             expanded_dir = Path(dir_str).expanduser().resolve()
             if not expanded_dir.is_dir():
@@ -124,8 +123,8 @@ class FilesystemContext:
     async def _read_file_async(
         self,
         path: Path,
-        offset: Optional[int] = None,
-        length: Optional[int] = None,
+        offset: int | None = None,
+        length: int | None = None,
         encoding: str = "utf-8",
     ) -> str:
         offset = offset or 0
