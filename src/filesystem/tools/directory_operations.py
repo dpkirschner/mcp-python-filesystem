@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List
 
 from .. import models
+from ..decorators import flat_args
 from ..tools import base
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class ListDirectoryTool(base.BaseTool):
         """
         return await self.list_directory(args)
 
+    @flat_args(models.ListDirectoryArgs)
     async def list_directory(
         self, args: models.ListDirectoryArgs
     ) -> List[models.DirectoryEntryItem]:

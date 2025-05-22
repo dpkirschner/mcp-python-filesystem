@@ -7,6 +7,7 @@ from typing import List
 from mcp.types import TextContent
 
 from .. import models
+from ..decorators import flat_args
 from ..tools import base
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class ReadFileTool(base.BaseTool):
         """
         return await self.read_file(args)
 
+    @flat_args(models.ReadFileArgs)
     async def read_file(self, args: models.ReadFileArgs) -> TextContent:
         valid_path = await self.fs_context.validate_path(args.path)
         content = await self.fs_context._read_file_async(
@@ -54,6 +56,7 @@ class GetFileInfoTool(base.BaseTool):
         """
         return await self.get_file_info(args)
 
+    @flat_args(models.GetFileInfoArgs)
     async def get_file_info(self, args: models.GetFileInfoArgs) -> models.FileInfo:
         valid_path = await self.fs_context.validate_path(args.path)
         stat = await self.fs_context._get_stat(valid_path)
@@ -118,6 +121,7 @@ class ReadMultipleFilesTool(base.BaseTool):
         """
         return await self.read_multiple_files(args)
 
+    @flat_args(models.ReadMultipleFilesArgs)
     async def read_multiple_files(
         self, args: models.ReadMultipleFilesArgs
     ) -> List[models.FileContentResult]:
@@ -167,6 +171,7 @@ class WriteFileTool(base.BaseTool):
         """
         return await self.write_file(args)
 
+    @flat_args(models.WriteFileArgs)
     async def write_file(self, args: models.WriteFileArgs) -> TextContent:
         valid_path = await self.fs_context.validate_path(
             args.path, check_existence=(args.mode == "append"), is_for_write=True
@@ -220,6 +225,7 @@ class EditFileTool(base.BaseTool):
         """
         return await self.edit_file(args)
 
+    @flat_args(models.EditFileArgs)
     async def edit_file(self, args: models.EditFileArgs) -> TextContent:
         valid_path = await self.fs_context.validate_path(
             args.path, is_for_write=True, check_existence=True

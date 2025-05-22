@@ -91,9 +91,9 @@ class TestReadPDFFileTool:
         args = schemas.ReadPdfFileArgs(path=str(sample_pdf), page_numbers=[1, 99])
 
         # Execute & Verify
-        with pytest.raises(RuntimeError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             await tool.read_pdf_file(args)
-        assert "Invalid page numbers: [99]" in str(exc_info.value)
+        assert "Invalid page numbers: [99]. Valid range is 1-3" in str(exc_info.value)
 
     async def test_read_pdf_nonexistent_file(
         self,
