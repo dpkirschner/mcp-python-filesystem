@@ -29,20 +29,20 @@ install-dev:
 	pip install -e ".[test,all]"
 
 # Run all tests
-test:
+test: install-dev
 	pytest tests/
 
 # Run unit tests only
-test-unit:
+test-unit: install-dev
 	@echo "Running unit tests..."
 	@pytest tests/unit/ -v --cache-clear
 
 # Run integration tests only
-test-integration:
+test-integration: install-dev
 	pytest tests/integration/
 
 # Run tests with coverage report
-test-cov:
+test-cov: install-dev
 	pytest --cov=src --cov-report=term-missing --cov-report=xml
 
 # Lint the code
