@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pdf = ["pypdf >=4.0"]         # For PDF reading tool
+pdf = ["PyMuPDF >=1.23.0"]         # For PDF reading tool
 magic = ["python-magic >=0.4"] # For advanced MIME type detection
 test = [
   "pytest>=7.0.0",

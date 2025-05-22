@@ -132,3 +132,24 @@ class FileContentResult(BaseModel):
     path: str
     content: Optional[str] = None
     error: Optional[str] = None
+
+
+class ReadPdfFileArgs(BaseModel):
+    path: str = Field(..., description="The path to the PDF file to read.")
+    page_numbers: Optional[List[int]] = Field(
+        default=None,
+        description="Specific page numbers to extract text from. If None, extracts from all pages.",
+    )
+
+
+class PdfPage(BaseModel):
+    page_number: int = Field(..., description="1-based page number")
+    text_content: str = Field(..., description="Extracted text content from the page")
+
+
+class PdfContent(BaseModel):
+    """Structured representation of PDF content with page-wise text extraction."""
+
+    path: str = Field(..., description="Path to the PDF file")
+    total_pages: int = Field(..., description="Total number of pages in the PDF")
+    pages: List[PdfPage] = Field(..., description="List of pages with extracted text")

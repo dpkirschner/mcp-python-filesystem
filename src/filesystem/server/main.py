@@ -7,7 +7,7 @@ from typing import List
 from mcp.server.fastmcp import FastMCP
 
 from ..context import context
-from ..tools import directory_operations, file_operations
+from ..tools import directory_operations, file_operations, pdf_operations
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -39,6 +39,18 @@ async def run_server_logic(allowed_dirs_str: List[str], verbose: bool) -> None:
     file_operations.EditFileTool(mcp, fs_context)
     file_operations.GetFileInfoTool(mcp, fs_context)
     directory_operations.ListDirectoryTool(mcp, fs_context)
+
+    # Register PDF operations if PyMuPDF is available
+    try:
+        import fitz  # type: ignore # noqa: F401
+
+        pdf_operations.ReadPDFFileTool(mcp, fs_context)
+        logger.info("PDF support enabled: PyMuPDF is available")
+    except ImportError:
+        logger.warning(
+            "PDF support disabled: PyMuPDF not installed. "
+            "Install with 'pip install PyMuPDF' or 'pip install mcp-filesystem[pdf]'"
+        )
 
     logger.info(
         f"Starting Python MCP Filesystem Server. Name: '{mcp.name}', Allowed Dirs: {allowed_dirs_str}"
